@@ -1,0 +1,5 @@
+exports.BackboneRest = require('./lib/backbone_rest')
+exports.BackboneSync = require('./lib/backbone_sync')
+exports.BatchUtils = require('./lib/batch_utils')
+exports.CollectionConnection = require('./lib/collection_connection')
+exports.CollectionQuery = require('./lib/collection_query')
