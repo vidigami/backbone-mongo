@@ -1,3 +1,4 @@
+EventEmitter = require('events').EventEmitter
 Queue = require 'queue-async'
 
 CollectionQuery = require './collection_query'
