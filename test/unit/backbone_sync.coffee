@@ -1,7 +1,7 @@
 assert = require 'assert'
 
 Backbone = require 'backbone'
-BackboneSync = require('../../mongo-backbone').BackboneSync
+BackboneSync = require '../../backbone_sync'
 
 module.exports = class Thing extends Backbone.Model
   sync: new BackboneSync({database_config: require('../config/database')['test'], collection: 'things', model: Thing})

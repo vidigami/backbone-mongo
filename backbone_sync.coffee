@@ -9,7 +9,7 @@ module.exports = class BackboneSync
     @collection_connection = new CollectionConnection(options.database_config, options.collection, { indices: options.indices })
     @model = options.model
 
-    @backbone_adapter = require(if options.manual_id then './document_adapter_no_mongo_id' else './document_adapter_mongo_id')
+    @backbone_adapter = require(if options.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
     @model.backbone_adapter = @backbone_adapter
 
     @model.parseRequestQuery = (req) =>
