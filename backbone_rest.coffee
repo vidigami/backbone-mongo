@@ -4,7 +4,7 @@ CollectionQuery = require './collection_query'
 HTTP_ERRORS =
   INTERNAL_SERVER: 500
 
-module.exports = class BackboneRESTMongo
+module.exports = class BackboneREST
 
   # params
   #  route
