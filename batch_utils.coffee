@@ -1,7 +1,7 @@
 EventEmitter = require('events').EventEmitter
 Queue = require 'queue-async'
 
-CollectionQuery = require './collection_query'
+Query = require './query'
 
 DEFAULT_LIMIT = 1500
 PARALLEL_COUNT = 100
@@ -11,7 +11,7 @@ module.exports = class BatchUtils
     event_emitter = new EventEmitter()
 
     runBatch = (query, callback) ->
-      db_query = new CollectionQuery(model_type, query)
+      db_query = new Query(model_type, query)
       db_query.toModels (err, models) ->
         return callback(new Error("Failed to get models")) if err or !models
         return callback(null) unless models.length

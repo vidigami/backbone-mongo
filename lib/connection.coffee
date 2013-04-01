@@ -23,7 +23,7 @@ connectionRetry = (retry_count, name, fn, callback) ->
       return callback.apply(null, arguments)
   call_fn()
 
-module.exports = class CollectionConnection
+module.exports = class Connection
 
   constructor: (config, collection_name, options = {}) ->
     @collection_requests = []

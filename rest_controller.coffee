@@ -1,22 +1,22 @@
 _ = require 'underscore'
-CollectionQuery = require './collection_query'
+Query = require './query'
 
 HTTP_ERRORS =
   INTERNAL_SERVER: 500
 
-module.exports = class BackboneREST
+module.exports = class RESTController
 
   # params
   #  route
   #  collection
-  @bindControllers: (app, bind_options, collection_info) ->
+  @bind: (app, bind_options, collection_info) ->
     route = collection_info.route
     model_type = collection_info.model
 
     # index
     app.get route, (req, res) ->
       # TODO: sanitize query - white list
-      db_query = new CollectionQuery(model_type, model_type.parseRequestQuery(req))
+      db_query = new Query(model_type, model_type.parseRequestQuery(req))
       db_query.toJSON (err, json) ->
         return res.status(HTTP_ERRORS.INTERNAL_SERVER).send() if err
         res.json(json)

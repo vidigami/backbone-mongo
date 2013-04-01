@@ -1,12 +1,12 @@
 _ = require 'underscore'
 moment = require 'moment'
 
-CollectionConnection = require './collection_connection'
+Connection = require './lib/connection'
 
 module.exports = class BackboneSync
 
   constructor: (options={}) ->
-    @collection_connection = new CollectionConnection(options.database_config, options.collection, { indices: options.indices })
+    @connection = new Connection(options.database_config, options.collection, { indices: options.indices })
     @model = options.model
 
     @backbone_adapter = require(if options.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
@@ -18,7 +18,7 @@ module.exports = class BackboneSync
       return query
 
     @model.findOne = (query, callback) =>
-      @collection_connection.collection (err, collection) =>
+      @connection.collection (err, collection) =>
         return callback(err) if err
         collection.findOne @backbone_adapter.attributesToDoc(query), (err, doc) =>
           if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model))
@@ -28,7 +28,7 @@ module.exports = class BackboneSync
       query_arguments = Array.prototype.slice.call(arguments)
       query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
       callback = query_arguments.pop()
-      @collection_connection.collection (err, collection) =>
+      @connection.collection (err, collection) =>
         return callback(err) if err
         collection.find.apply(collection, query_arguments).toArray (err, docs) =>
           if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model)))
@@ -39,7 +39,7 @@ module.exports = class BackboneSync
       query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
       callback = query_arguments.pop()
 
-      @collection_connection.collection (err, collection) =>
+      @connection.collection (err, collection) =>
         return callback(err) if err
         collection.find.apply(collection, query_arguments).toArray(callback)
 
@@ -49,16 +49,16 @@ module.exports = class BackboneSync
       query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
       callback = query_arguments.pop()
 
-      @collection_connection.collection (err, collection) =>
+      @connection.collection (err, collection) =>
         return callback(err) if err
         callback(null, collection.find.apply(collection, query_arguments))
 
     @model.docToModel = (doc) => @backbone_adapter.docToModel(doc, @model)
     @model.docsToModels = (docs) => _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model))
-    @model.collection = (callback) => @collection_connection.collection callback
+    @model.collection = (callback) => @connection.collection callback
 
   read: (model, options) ->
-    @collection_connection.collection (err, collection) =>
+    @connection.collection (err, collection) =>
       return options.error?(err) if err
 
       # a collection
@@ -72,7 +72,7 @@ module.exports = class BackboneSync
           if err then options.error?(err) else options.success?(@backbone_adapter.docToAttributes(doc))
 
   create: (model, options) ->
-    @collection_connection.collection (err, collection) =>
+    @connection.collection (err, collection) =>
       return options.error?(err) if err
       return options.error?(new Error("new document has a non-empty revision")) if model.get('_rev')
       doc = @backbone_adapter.modelToDoc(model); doc._rev = 1 # start revisions
@@ -83,7 +83,7 @@ module.exports = class BackboneSync
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
 
-    @collection_connection.collection (err, collection) =>
+    @connection.collection (err, collection) =>
       return options.error?(err) if err
       json = @backbone_adapter.modelToDoc(model)
       delete json._id if @backbone_adapter.idAttribute is '_id'
@@ -112,7 +112,7 @@ module.exports = class BackboneSync
           options.success?(@backbone_adapter.docToAttributes(doc))
 
   delete: (model, options) ->
-    @collection_connection.collection (err, collection) =>
+    @connection.collection (err, collection) =>
       return options.error?(err) if err
       collection.remove @backbone_adapter.modelFindQuery(model), (err, doc) =>
         if err then options.error?(model, err, options) else options.success?(model, {}, options)

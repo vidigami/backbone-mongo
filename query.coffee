@@ -3,7 +3,7 @@ moment = require 'moment'
 
 INTERVAL_TYPES = ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
 
-module.exports = class CollectionQuery
+module.exports = class Query
 
   constructor: (@model_type, raw_query) ->
     @backbone_adapter = @model_type.backbone_adapter
