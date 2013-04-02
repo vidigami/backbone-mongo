@@ -1,5 +1,6 @@
 _ = require 'underscore'
 moment = require 'moment'
+Queue = require 'queue-async'
 
 Connection = require './lib/connection'
 
@@ -7,23 +8,23 @@ module.exports = class BackboneSync
 
   constructor: (options={}) ->
     @connection = new Connection(options.database_config, options.collection, { indices: options.indices })
-    @model = options.model
+    @model_type = options.model
 
     @backbone_adapter = require(if options.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
-    @model.backbone_adapter = @backbone_adapter
+    @model_type.backbone_adapter = @backbone_adapter
 
-    @model.parseRequestQuery = (req) =>
+    @model_type.parseRequestQuery = (req) =>
       query = if req.query then _.clone(req.query) else {}
       (query[key] = JSON.parse(value) for key, value of query) if _.isObject(query)
       return query
 
-    @model.findOne = (query, callback) =>
+    @model_type.findOne = (query, callback) =>
       @connection.collection (err, collection) =>
         return callback(err) if err
         collection.findOne @backbone_adapter.attributesToDoc(query), (err, doc) =>
-          if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model))
+          if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model_type))
 
-    @model.find = (query_args_callback) =>
+    @model_type.find = (query_args_callback) =>
       # convert the query argument to a document
       query_arguments = Array.prototype.slice.call(arguments)
       query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
@@ -31,9 +32,9 @@ module.exports = class BackboneSync
       @connection.collection (err, collection) =>
         return callback(err) if err
         collection.find.apply(collection, query_arguments).toArray (err, docs) =>
-          if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model)))
+          if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type)))
 
-    @model.findDocs = (query_args_callback) =>
+    @model_type.findDocs = (query_args_callback) =>
       # convert the query argument to a document
       query_arguments = Array.prototype.slice.call(arguments)
       query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
@@ -43,7 +44,7 @@ module.exports = class BackboneSync
         return callback(err) if err
         collection.find.apply(collection, query_arguments).toArray(callback)
 
-    @model.findCursor = (query_args_callback) =>
+    @model_type.findCursor = (query_args_callback) =>
       # convert the query argument to a document
       query_arguments = Array.prototype.slice.call(arguments)
       query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
@@ -53,9 +54,52 @@ module.exports = class BackboneSync
         return callback(err) if err
         callback(null, collection.find.apply(collection, query_arguments))
 
-    @model.docToModel = (doc) => @backbone_adapter.docToModel(doc, @model)
-    @model.docsToModels = (docs) => _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model))
-    @model.collection = (callback) => @connection.collection callback
+    # options:
+    #  @key: default 'created_at'
+    #  @reverse: default false
+    #  @date: default now
+    #  @query: default none
+    @model_type.findOneNearDate = (options, callback) =>
+      key = options.key or 'created_at'
+      date = options.date or moment.utc().toDate()
+      query = _.clone(options.query or {})
+
+      findForward = (callback) =>
+        query[key] = {$lte: date.toISOString()}
+        @model_type.findCursor query, (err, cursor) =>
+          return callback(err) if err
+
+          cursor.limit(1).sort([[key, 'desc']]).toArray (err, docs) =>
+            return callback(err) if err
+            return callback(null, null) unless docs.length
+
+            callback(null, @model_type.docsToModels(docs)[0])
+
+      findReverse = (callback) =>
+        query[key] = {$gte: date.toISOString()}
+        @model_type.findCursor query, (err, cursor) =>
+          return callback(err) if err
+
+          cursor.limit(1).sort([[key, 'asc']]).toArray (err, docs) =>
+            return callback(err) if err
+            return callback(null, null) unless docs.length
+
+            callback(null, @model_type.docsToModels(docs)[0])
+
+      if options.reverse
+        findReverse (err, model) =>
+          return callback(err) if err
+          return callback(null, model) if model
+          findForward callback
+      else
+        findForward (err, model) =>
+          return callback(err) if err
+          return callback(null, model) if model
+          findReverse callback
+
+    @model_type.docToModel = (doc) => @backbone_adapter.docToModel(doc, @model_type)
+    @model_type.docsToModels = (docs) => _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type))
+    @model_type.collection = (callback) => @connection.collection callback
 
   read: (model, options) ->
     @connection.collection (err, collection) =>
