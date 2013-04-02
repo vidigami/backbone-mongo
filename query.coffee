@@ -140,7 +140,8 @@ module.exports = class Query
             cursor.$select = @parseArray(value)
             console.log("Failed to parse $select: #{value}") unless cursor.$select
           else
-            cursor.$select = [@parseValue(value)]
+            cursor.$select = @parseValue(value)
+            cursor.$select = [cursor.$select] unless _.isArray(cursor.$select)
 
         # parse even if you don't recognize it so others can use it
         else
