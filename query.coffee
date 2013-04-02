@@ -42,12 +42,12 @@ class IntervalIterator
   findStartCap: (query, callback) ->
     start = @range_query.$gte if @range_query.$gte
     start = moment.utc().toDate() unless start
-    @model_type.findOneNearDate {key: @key, date: start, query: query}, callback
+    @model_type.findOneNearDate {key: @key, date: start, query: query, reverse: true}, callback
 
   findEndCap: (query, callback) ->
     end = @range_query.$lte if @range_query.$lte
     end = moment.utc().toDate() unless end
-    @model_type.findOneNearDate {key: @key, date: end, query: query, reverse: true}, callback
+    @model_type.findOneNearDate {key: @key, date: end, query: query}, callback
 
 module.exports = class Query
 
