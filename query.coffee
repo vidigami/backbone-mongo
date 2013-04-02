@@ -3,6 +3,37 @@ moment = require 'moment'
 
 INTERVAL_TYPES = ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
 
+class IntervalIterator
+  constructor: (options) ->
+    @[key] = value for key, value of options
+
+    throw new Error("missing interval_type") unless @interval_type
+    throw new Error("missing range_query") unless @range_query
+    throw new Error("interval_type is not recognized: #{@interval_type}, #{_.contains(INTERVAL_TYPES, @interval_type)}") unless _.contains(INTERVAL_TYPES, @interval_type)
+
+    # start
+    start = @range_query.$gte if @range_query.$gte
+    start = moment.utc().toDate() unless start
+    @start_ms = start.getTime()
+
+    # end
+    end = @range_query.$lte if @range_query.$lte
+    end = moment.utc().toDate() unless end
+    @end_ms = end.getTime()
+
+    # interval step
+    @interval_length_ms = moment.duration((if _.isUndefined(@interval_length) then 1 else @interval_length), @interval_type).asMilliseconds()
+    throw Error("interval_length_ms is invalid: #{@interval_length}") unless @interval_length_ms
+
+  contains: (date) ->
+    time_ms = if date.getTime then date.getTime() else date
+    return time_ms >= @start_ms and time_ms <= @end_ms
+
+  toIndex: (date) ->
+    return -1 unless @contains(date)
+    time_ms = if date.getTime then date.getTime() else date
+    return Math.floor((time_ms - @start_ms) / @interval_length_ms)
+
 module.exports = class Query
 
   constructor: (@model_type, raw_query) ->
@@ -90,23 +121,13 @@ module.exports = class Query
   ##############################################
   # Intervals
   ##############################################
-  intervalIterator: (time_key='created_at') ->
-    iterator = {}
+  intervalIterator: (key, callback) ->
+    return callback(new Error("missing find time key")) unless @find.hasOwnProperty(key)
 
-    # missing the required parameters
-    interval_type = @$interval_type
-    (iterator.error = "missing $interval_type"; return iterator) unless interval_type
-    (iterator.error = "$interval_type is not recognized: #{interval_type}, #{_.contains(INTERVAL_TYPES, interval_type) }"; return iterator) unless (interval_type and _.contains(INTERVAL_TYPES, interval_type) and @find[time_key])
-
-    start = @find[time_key]
-    start = start.$gte if start and start.$gte
-    start = moment.utc().toDate() unless start
-
-    iterator.start_ms = start.getTime()
-    interval_length = if _.isUndefined(@$interval_length) then 1 else @$interval_length
-    iterator.interval_length_ms = moment.duration(interval_length, interval_type).asMilliseconds()
-    (iterator.error = "interval_length_ms is invalid: #{req.query.$interval_length}"; return iterator) unless iterator.interval_length_ms # failed to get interval
-    return iterator
+    try
+      return callback(null, new IntervalIterator({interval_type: @$interval_type, interval_length: @$interval_length, key: key, range_query: @find[key], model_type: @model_type}))
+    catch err
+      return callback err
 
   ##############################################
   # Query Parsing
