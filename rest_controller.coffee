@@ -4,6 +4,18 @@ Query = require './query'
 HTTP_ERRORS =
   INTERNAL_SERVER: 500
 
+bindRoute = (app, url, bind_options={}) ->
+  app.all url, (req, res, next) ->
+    res.set 'Access-Control-Allow-Origin', bind_options.origins if bind_options.origins
+    res.header 'Access-Control-Allow-Headers', 'X-Requested-With,Content-Disposition,Content-Type,Content-Description,Content-Range'
+    res.header 'Access-Control-Allow-Methods', 'HEAD, GET, POST, PUT, DELETE, OPTIONS'
+    res.header('Access-Control-Allow-Credentials', 'true')
+
+    # TODO: why did options return 404 when switched to express 3.1.0 from 3.0.0rc1
+    return res.send(200) if req.method.toLowerCase() is 'options'
+
+    next()
+
 module.exports = class RESTController
 
   # params
@@ -12,6 +24,8 @@ module.exports = class RESTController
   @bind: (app, bind_options, collection_info) ->
     route = collection_info.route
     model_type = collection_info.model
+
+    bindRoute(app, url, bind_options) for url in [route, "#{route}/:id"]
 
     # index
     app.get route, (req, res) ->
