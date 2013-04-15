@@ -1,5 +1,6 @@
 ObjectID =  require('mongodb').ObjectID
 json_utils = require './json_utils'
+Store = require './store'
 
 module.exports = class DocumentAdapter_MongoId
 
@@ -9,9 +10,9 @@ module.exports = class DocumentAdapter_MongoId
 
   @docToModel: (doc, model_type) ->
     return null unless doc
-    model = new model_type()
-    model.set(model.parse(@docToAttributes(doc)))
-    return model
+
+    # work around for Backbone Relational
+    return Store.findOrCreate(model_type, (new model_type()).parse(@docToAttributes(doc)))
 
   @modelToDoc: (model) ->
     return @attributesToDoc(model.toJSON())

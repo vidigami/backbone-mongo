@@ -37,8 +37,9 @@ module.exports = class RESTController
 
     # create
     app.post route, (req, res) ->
+
       model = new model_type()
-      model.set(_.defaults(model.parse(req.body)))
+      model.set(model.parse(req.body))
 
       bind_options.create?(model) # customization hooks
       model.save({}, {
