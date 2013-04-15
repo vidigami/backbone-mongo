@@ -32,9 +32,7 @@ module.exports = class Connection
 
     queue = Queue(1)
     queue.defer (callback) =>
-      doOpen = (callback) =>
-        @client.open (err, result) ->
-          callback(err)
+      doOpen = (callback) => @client.open callback
 
       # socket retries
       connectionRetry(RETRY_COUNT, "MongoDB client open: #{collection_name}", doOpen, callback)
