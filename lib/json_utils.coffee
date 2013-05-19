@@ -24,7 +24,10 @@ module.exports = class JSONUtils
   @valueToJSON: (value) ->
     return value unless value
     if _.isDate(value)
-      return value.toISOString()
+      try
+        return value.toISOString()
+      catch e
+        return null # not a valid date
     else if _.isString(value)
       return value
     else if _.isArray(value)

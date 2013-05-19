@@ -4,6 +4,12 @@ Queue = require 'queue-async'
 
 Connection = require './lib/connection'
 
+_extractQueryArgs = (args, query_optional) ->
+  return [[{}], args[0]] if query_optional and args.length is 1
+  query_args = Array.prototype.slice.call(args)
+  query_args[0] = @backbone_adapter.attributesToDoc(query_args[0])
+  return [query_args, query_args.pop()]
+
 module.exports = class BackboneSync
 
   constructor: (options={}) ->
@@ -13,10 +19,23 @@ module.exports = class BackboneSync
     @backbone_adapter = require(if options.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
     @model_type.backbone_adapter = @backbone_adapter
 
-    @model_type.parseRequestQuery = (req) =>
-      query = if req.query then _.clone(req.query) else {}
-      (query[key] = JSON.parse(value) for key, value of query) if _.isObject(query)
-      return query
+    @model_type.count = (optional_query, callback) =>
+      [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
+
+      @connection.collection (err, collection) =>
+        return callback(err) if err
+        query_args.push (err, cursor) =>
+          return callback(err) if err
+          cursor.count callback
+        collection.find.apply(collection, query_args)
+
+    @model_type.destroy = (optional_query, callback) =>
+      [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
+      query_args.push(callback)
+
+      @connection.collection (err, collection) =>
+        return callback(err) if err
+        collection.remove.apply(collection, query_args)
 
     @model_type.findOne = (query, callback) =>
       @connection.collection (err, collection) =>
@@ -25,34 +44,31 @@ module.exports = class BackboneSync
           if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model_type))
 
     @model_type.find = (query_args_callback) =>
-      # convert the query argument to a document
-      query_arguments = Array.prototype.slice.call(arguments)
-      query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
-      callback = query_arguments.pop()
+      [query_args, callback] = _extractQueryArgs.call(this, arguments)
+
       @connection.collection (err, collection) =>
         return callback(err) if err
-        collection.find.apply(collection, query_arguments).toArray (err, docs) =>
+        collection.find.apply(collection, query_args).toArray (err, docs) =>
           if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type)))
 
     @model_type.findDocs = (query_args_callback) =>
-      # convert the query argument to a document
-      query_arguments = Array.prototype.slice.call(arguments)
-      query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
-      callback = query_arguments.pop()
+      [query_args, callback] = _extractQueryArgs.call(this, arguments)
 
       @connection.collection (err, collection) =>
         return callback(err) if err
-        collection.find.apply(collection, query_arguments).toArray(callback)
+        collection.find.apply(collection, query_args).toArray(callback)
 
     @model_type.findCursor = (query_args_callback) =>
-      # convert the query argument to a document
-      query_arguments = Array.prototype.slice.call(arguments)
-      query_arguments[0] = @backbone_adapter.attributesToDoc(query_arguments[0])
-      callback = query_arguments.pop()
+      [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
 
       @connection.collection (err, collection) =>
         return callback(err) if err
-        callback(null, collection.find.apply(collection, query_arguments))
+        callback(null, collection.find.apply(collection, query_args))
+
+    @model_type.parseRequestQuery = (req) =>
+      query = if req.query then _.clone(req.query) else {}
+      (query[key] = JSON.parse(value) for key, value of query) if _.isObject(query)
+      return query
 
     # options:
     #  @key: default 'created_at'
