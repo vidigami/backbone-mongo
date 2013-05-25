@@ -2,6 +2,7 @@ _ = require 'underscore'
 Queue = require 'queue-async'
 mongodb = require 'mongodb'
 util = require 'util'
+URL = require 'url'
 
 # two minutes
 RETRY_COUNT = 120
@@ -27,6 +28,14 @@ module.exports = class Connection
 
   constructor: (config, collection_name, options = {}) ->
     @collection_requests = []
+
+    if _.isString(config)
+      url_parts = URL.parse(config)
+      config =
+        host: url_parts.hostname
+        port: url_parts.port
+        database: url_parts.path.split('/')[1]
+
     console.log "MongoDB for '#{collection_name}' is: '#{config.host}:#{config.port}/#{config.database}'"
     @client = new mongodb.Db(config.database, new mongodb.Server(config.host, config.port, {}), {safe: true})
 

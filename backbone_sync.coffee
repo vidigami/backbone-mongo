@@ -13,7 +13,7 @@ _extractQueryArgs = (args, query_optional) ->
 module.exports = class BackboneSync
 
   constructor: (options={}) ->
-    @connection = new Connection(options.database_config, options.collection, { indices: options.indices })
+    @connection = new Connection(options.url or options.database_config, options.collection, { indices: options.indices })
     @model_type = options.model
 
     @backbone_adapter = require(if options.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
