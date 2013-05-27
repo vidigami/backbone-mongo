@@ -8,7 +8,7 @@ BackboneSync = require '../../backbone_sync'
 module.exports = class Thing extends Backbone.Model
   sync: new BackboneSync({database_config: require('../config/database')['test'], collection: 'bobs', model: Thing})
 adapters =
-  bbCallback: (callback) -> return {success: (-> callback(null)), error: (-> callback(new Error("failed")))}
+  bbCallback: (callback) -> return {success: (-> callback()), error: (-> callback(new Error("failed")))}
 
 describe "BackboneSync", ->
 
@@ -27,7 +27,7 @@ describe "BackboneSync", ->
       queue.defer (callback) ->
         assert.equal(bob.get('name'), 'Bob', 'name after save is Bob')
         assert.ok(!!bob.get('id'), 'id after save is assigned')
-        callback(null)
+        callback()
 
       queue.await done
 

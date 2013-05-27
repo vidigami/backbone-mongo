@@ -50,7 +50,7 @@ module.exports = class Connection
       if config.user
         @client.authenticate(config.user, config.password, callback)
       else
-        callback(null)
+        callback()
 
     queue.defer (callback) =>
 
@@ -68,7 +68,7 @@ module.exports = class Connection
           collection_requests = _.clone(@collection_requests); @collection_requests = []
           @_collection = collection
           request(null, @_collection) for request in collection_requests
-          callback(null)
+          callback()
 
       # socket retries
       connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{collection_name}", doConnectToCollection, callback)

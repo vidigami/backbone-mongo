@@ -14,7 +14,7 @@ module.exports = class BatchUtils
       db_query = new Query(model_type, query)
       db_query.toModels (err, models) ->
         return callback(new Error("Failed to get models")) if err or !models
-        return callback(null) unless models.length
+        return callback() unless models.length
         event_emitter.emit 'progress', "Start batch length: #{models.length}"
 
         # closure
