@@ -5,7 +5,7 @@ BackboneSync = require '../../backbone_sync'
 Query = require '../../query'
 
 module.exports = class QueryThing extends Backbone.Model
-  sync: new BackboneSync({database_config: require('../config/database')['test'], collection: 'query_things', model: QueryThing})
+  sync: new BackboneSync({url: require('../config/database')['test'].url, collection: 'query_things', model: QueryThing})
 
 describe "Query", ->
 
