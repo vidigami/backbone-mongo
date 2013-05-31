@@ -35,6 +35,10 @@ module.exports = class Connection
         host: url_parts.hostname
         port: url_parts.port
         database: url_parts.path.split('/')[1]
+      if url_parts.auth
+        auth_parts = url_parts.auth.split(':')
+        config.user = auth_parts[0]
+        config.password = auth_parts[1]
 
     console.log "MongoDB for '#{collection_name}' is: '#{config.host}:#{config.port}/#{config.database}'"
     @client = new mongodb.Db(config.database, new mongodb.Server(config.host, config.port, {}), {safe: true})
