@@ -70,24 +70,6 @@ module.exports = class BackboneSync
       (query[key] = JSON.parse(value) for key, value of query) if _.isObject(query)
       return query
 
-    # TODO: make this automatic in update - would need to cache information
-    @model_type.changeId = (model, id, callback) =>
-      @connection.collection (err, collection) =>
-        return callback(err) if err
-
-        json = @backbone_adapter.modelToDoc(model)
-        delete json._id if @backbone_adapter.idAttribute is '_id'
-        find_query = @backbone_adapter.modelFindQuery(model)
-        find_query._rev = json._rev
-        json._rev++ # increment revisions
-
-        # update the record
-        json[@backbone_adapter.idAttribute] = id
-        collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$set: json}, {new: true}, (err, doc) =>
-          return callback(new Error("Failed to update model. #{err}")) if err or not doc
-          return callback(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
-          return callback(null, @backbone_adapter.docToAttributes(doc))
-
     # options:
     #  @key: default 'created_at'
     #  @reverse: default false
