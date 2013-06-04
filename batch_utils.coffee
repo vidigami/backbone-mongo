@@ -30,7 +30,7 @@ module.exports = class BatchUtils
           runBatch(query, callback)
 
     query = {
-      $limit: DEFAULT_LIMIT
+      $limit: limit
       $offset: 0
       $sort: [['id', 'asc']]
     }
