@@ -26,7 +26,7 @@ connectionRetry = (retry_count, name, fn, callback) ->
 
 module.exports = class Connection
 
-  constructor: (@url, schema={}) ->
+  constructor: (@url, @schema={}) ->
     @collection_requests = []
     throw new Error "Expecting a string url" unless _.isString(@url)
     url_parts = URL.parse(@url)
@@ -40,9 +40,9 @@ module.exports = class Connection
 
     database_parts = url_parts.path.split('/')
     database = database_parts[1]
-    collection = database_parts[2]
+    collection_name = database_parts[2]
 
-    console.log "MongoDB for '#{collection}' is: '#{config.host}:#{config.port}/#{database}'"
+    console.log "MongoDB for '#{collection_name}' is: '#{config.host}:#{config.port}/#{database}'"
     @client = new mongodb.Db(database, new mongodb.Server(config.host, config.port, {}), {safe: true})
 
     queue = Queue(1)
@@ -50,7 +50,7 @@ module.exports = class Connection
       doOpen = (callback) => @client.open callback
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB client open: #{collection}", doOpen, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB client open: #{collection_name}", doOpen, callback)
 
     queue.defer (callback) =>
       if config.user
@@ -61,15 +61,17 @@ module.exports = class Connection
     queue.defer (callback) =>
 
       doConnectToCollection = (callback) =>
-        @client.collection collection, (err, collection) =>
+        @client.collection collection_name, (err, collection) =>
           return callback(err) if err
 
-          # TODO: map indices
-          # if options.indices
-          #   console.log("Trying to ensureIndex #{util.inspect(options.indices)} on #{collection}")
-          #   collection.ensureIndex options.indices, {background: true}, (err) =>
-          #     return new Error("Failed to ensureIndex #{util.inspect(options.indices)} on #{collection}. Reason: #{err}") if err
-          #     console.log("Successfully ensureIndex #{util.inspect(options.indices)} on #{collection}")
+          # create indices
+          for key, value of @schema
+            if value.indexed
+              # console.log("Trying to ensureIndex for #{key} on #{collection_name}")
+              index_info = {}; index_info[key] = 1
+              collection.ensureIndex index_info, {background: true}, (err) =>
+                return new Error("MongoBackbone: Failed to indexed '#{key}' on #{collection_name}. Reason: #{err}") if err
+                console.log("MongoBackbone: Successfully indexed '#{key}' on #{collection_name}")
 
           # deal with waiting requests
           collection_requests = _.clone(@collection_requests); @collection_requests = []
@@ -78,13 +80,12 @@ module.exports = class Connection
           callback()
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{collection}", doConnectToCollection, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{collection_name}", doConnectToCollection, callback)
 
     queue.await (err) =>
       if err
         @failed_connection = true
-        collection_requests = _.clone(@collection_requests)
-        @collection_requests = []
+        collection_requests = _.clone(@collection_requests); @collection_requests = []
         request(new Error("Connection failed")) for request in collection_requests
 
   collection: (callback) ->
