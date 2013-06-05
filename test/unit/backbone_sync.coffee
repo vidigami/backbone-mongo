@@ -5,8 +5,10 @@ Queue = require 'queue-async'
 Backbone = require 'backbone'
 BackboneSync = require '../../backbone_sync'
 
-module.exports = class Thing extends Backbone.Model
-  sync: new BackboneSync({url: require('../config/database')['test'].url, collection: 'other_things', model: Thing})
+class Thing extends Backbone.Model
+  sync: new BackboneSync({model: Thing})
+  url: require('../config/database')['test']
+
 adapters =
   bbCallback: (callback) -> return {success: (-> callback()), error: (-> callback(new Error("failed")))}
 

@@ -26,29 +26,31 @@ connectionRetry = (retry_count, name, fn, callback) ->
 
 module.exports = class Connection
 
-  constructor: (config, collection_name, options = {}) ->
+  constructor: (@url, options = {}) ->
     @collection_requests = []
+    throw new Error "Expecting a string url" unless _.isString(@url)
+    url_parts = URL.parse(@url)
+    config =
+      host: url_parts.hostname
+      port: url_parts.port
+    if url_parts.auth
+      auth_parts = url_parts.auth.split(':')
+      config.user = auth_parts[0]
+      config.password = auth_parts[1]
 
-    if _.isString(config)
-      url_parts = URL.parse(config)
-      config =
-        host: url_parts.hostname
-        port: url_parts.port
-        database: url_parts.path.split('/')[1]
-      if url_parts.auth
-        auth_parts = url_parts.auth.split(':')
-        config.user = auth_parts[0]
-        config.password = auth_parts[1]
+    database_parts = url_parts.path.split('/')
+    database = database_parts[1]
+    collection = database_parts[2]
 
-    console.log "MongoDB for '#{collection_name}' is: '#{config.host}:#{config.port}/#{config.database}'"
-    @client = new mongodb.Db(config.database, new mongodb.Server(config.host, config.port, {}), {safe: true})
+    console.log "MongoDB for '#{collection}' is: '#{config.host}:#{config.port}/#{database}'"
+    @client = new mongodb.Db(database, new mongodb.Server(config.host, config.port, {}), {safe: true})
 
     queue = Queue(1)
     queue.defer (callback) =>
       doOpen = (callback) => @client.open callback
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB client open: #{collection_name}", doOpen, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB client open: #{collection}", doOpen, callback)
 
     queue.defer (callback) =>
       if config.user
@@ -59,14 +61,14 @@ module.exports = class Connection
     queue.defer (callback) =>
 
       doConnectToCollection = (callback) =>
-        @client.collection collection_name, (err, collection) =>
+        @client.collection collection, (err, collection) =>
           return callback(err) if err
 
           if options.indices
-            console.log("Trying to ensureIndex #{util.inspect(options.indices)} on #{collection_name}")
+            console.log("Trying to ensureIndex #{util.inspect(options.indices)} on #{collection}")
             collection.ensureIndex options.indices, {background: true}, (err) =>
-              return new Error("Failed to ensureIndex #{util.inspect(options.indices)} on #{collection_name}. Reason: #{err}") if err
-              console.log("Successfully ensureIndex #{util.inspect(options.indices)} on #{collection_name}")
+              return new Error("Failed to ensureIndex #{util.inspect(options.indices)} on #{collection}. Reason: #{err}") if err
+              console.log("Successfully ensureIndex #{util.inspect(options.indices)} on #{collection}")
 
           # deal with waiting requests
           collection_requests = _.clone(@collection_requests); @collection_requests = []
@@ -75,7 +77,7 @@ module.exports = class Connection
           callback()
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{collection_name}", doConnectToCollection, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{collection}", doConnectToCollection, callback)
 
     queue.await (err) =>
       if err

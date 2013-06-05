@@ -1,3 +1,2 @@
 module.exports =
-  test:
-    url: 'mongodb://localhost:27017/test-mongo-backbone'
+  test: 'mongodb://localhost:27017/test-mongo-backbone/things'

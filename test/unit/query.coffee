@@ -4,8 +4,9 @@ Backbone = require 'backbone'
 BackboneSync = require '../../backbone_sync'
 Query = require '../../query'
 
-module.exports = class QueryThing extends Backbone.Model
-  sync: new BackboneSync({url: require('../config/database')['test'].url, collection: 'query_things', model: QueryThing})
+class QueryThing extends Backbone.Model
+  sync: new BackboneSync({model: QueryThing})
+  url: require('../config/database')['test']
 
 describe "Query", ->
 
