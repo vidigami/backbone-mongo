@@ -180,7 +180,7 @@ module.exports = class BackboneSync
       model or= (new @model_type()) # dummay model to retrieve the url on collection functions
       return callback(new Error "Missing url for model") unless url = _.result(model, 'url')
       schema = _.result(model, 'schema') or {}
-      @backbone_adapter = require(if schema.id?.custom then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
+      @backbone_adapter = require(if !!schema.id?.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
       @model_type.backbone_adapter = @backbone_adapter
       @connection = new Connection(url, schema)
     @connection.collection(callback)
