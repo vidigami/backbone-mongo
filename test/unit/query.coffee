@@ -1,12 +1,14 @@
 assert = require 'assert'
 
 Backbone = require 'backbone'
-BackboneSync = require '../../backbone_sync'
+backboneSync = require '../../backbone_sync'
 Query = require '../../query'
 
 class QueryThing extends Backbone.Model
-  sync: new BackboneSync({model: QueryThing})
+  sync: backboneSync(QueryThing)
   url: require('../config/database')['test']
+  schema:
+    id: {indexed: true}
 
 describe "Query", ->
 

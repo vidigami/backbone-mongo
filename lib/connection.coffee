@@ -26,7 +26,7 @@ connectionRetry = (retry_count, name, fn, callback) ->
 
 module.exports = class Connection
 
-  constructor: (@url, options = {}) ->
+  constructor: (@url, schema={}) ->
     @collection_requests = []
     throw new Error "Expecting a string url" unless _.isString(@url)
     url_parts = URL.parse(@url)
@@ -64,11 +64,12 @@ module.exports = class Connection
         @client.collection collection, (err, collection) =>
           return callback(err) if err
 
-          if options.indices
-            console.log("Trying to ensureIndex #{util.inspect(options.indices)} on #{collection}")
-            collection.ensureIndex options.indices, {background: true}, (err) =>
-              return new Error("Failed to ensureIndex #{util.inspect(options.indices)} on #{collection}. Reason: #{err}") if err
-              console.log("Successfully ensureIndex #{util.inspect(options.indices)} on #{collection}")
+          # TODO: map indices
+          # if options.indices
+          #   console.log("Trying to ensureIndex #{util.inspect(options.indices)} on #{collection}")
+          #   collection.ensureIndex options.indices, {background: true}, (err) =>
+          #     return new Error("Failed to ensureIndex #{util.inspect(options.indices)} on #{collection}. Reason: #{err}") if err
+          #     console.log("Successfully ensureIndex #{util.inspect(options.indices)} on #{collection}")
 
           # deal with waiting requests
           collection_requests = _.clone(@collection_requests); @collection_requests = []

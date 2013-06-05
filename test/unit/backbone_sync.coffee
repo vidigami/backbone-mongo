@@ -3,10 +3,10 @@ assert = require 'assert'
 Queue = require 'queue-async'
 
 Backbone = require 'backbone'
-BackboneSync = require '../../backbone_sync'
+backboneSync = require '../../backbone_sync'
 
 class Thing extends Backbone.Model
-  sync: new BackboneSync({model: Thing})
+  sync: backboneSync(Thing)
   url: require('../config/database')['test']
 
 adapters =

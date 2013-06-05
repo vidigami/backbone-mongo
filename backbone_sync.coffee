@@ -13,13 +13,7 @@ _extractQueryArgs = (args, query_optional) ->
 
 module.exports = class BackboneSync
 
-  constructor: (options={}) ->
-    @model_type = options.model
-    @indices = options.indices
-
-    @backbone_adapter = require(if options.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
-    @model_type.backbone_adapter = @backbone_adapter
-
+  constructor: (@model_type) ->
     @model_type.count = (optional_query, callback) =>
       [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
 
@@ -184,16 +178,17 @@ module.exports = class BackboneSync
     # lazy create a connection on the first request
     if not @connection
       model or= (new @model_type()) # dummay model to retrieve the url on collection functions
-      url = if _.isFunction(model.url) then model.url() else model.url
-      return callback(new Error "Missing url for model") unless url
-      @connection = new Connection(url, {indices: @indices})
-
+      return callback(new Error "Missing url for model") unless url = _.result(model, 'url')
+      schema = _.result(model, 'schema') or {}
+      @backbone_adapter = require(if schema.id?.custom then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
+      @model_type.backbone_adapter = @backbone_adapter
+      @connection = new Connection(url, schema)
     @connection.collection(callback)
 
 # options
 #   database_config - the database config
 #   collection - the collection to use for models
 #   model - the model that will be used to add query functions to
-module.exports = (options) ->
-  sync = new BackboneSync(options)
+module.exports = (model_type) ->
+  sync = new BackboneSync(model_type)
   return (method, model, options={}) -> sync[method](model, options)
