@@ -175,20 +175,32 @@ module.exports = class BackboneSync
   _collection: (model, callback) ->
     (callback = model; model = null) if arguments.length is 1
 
-    # lazy create a connection on the first request
-    if not @connection
-      model or= (new @model_type()) # dummay model to retrieve the url on collection functions
+    initialize = =>
+      console.log "initalize"
+
+      model or= (new @model_type()) # dummy model to retrieve the url on collection functions
       return callback(new Error "Missing url for model") unless url = _.result(model, 'url')
-      schema = _.result(model, 'schema') or {}
-      @backbone_adapter = require(if !!schema.id?.manual_id then './lib/document_adapter_no_mongo_id' else './lib/document_adapter_mongo_id')
+      schema = _.result(@model_type, 'schema') or {}
+
+      console.log util.inspect(schema)
+      for field_name, field_info of schema
+        continue if (field_name isnt 'id') or not _.isArray(field_info)
+        for info in field_info
+          if info.manual_id
+            @backbone_adapter = require './lib/document_adapter_no_mongo_id'
+            break
+        break
+
+      @backbone_adapter = require './lib/document_adapter_mongo_id' if not @backbone_adapter # default is using the mongodb adapter
       @model_type.backbone_adapter = @backbone_adapter
       @connection = new Connection(url, schema)
+
+    # lazy create a connection on the first request
+    initialize() unless @connection
     @connection.collection(callback)
 
 # options
-#   database_config - the database config
-#   collection - the collection to use for models
-#   model - the model that will be used to add query functions to
+#   model_type - the model that will be used to add query functions to
 module.exports = (model_type) ->
   sync = new BackboneSync(model_type)
   return (method, model, options={}) -> sync[method](model, options)

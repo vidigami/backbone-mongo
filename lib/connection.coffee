@@ -40,9 +40,9 @@ module.exports = class Connection
 
     database_parts = url_parts.path.split('/')
     database = database_parts[1]
-    collection_name = database_parts[2]
+    table = database_parts[2]
 
-    console.log "MongoDB for '#{collection_name}' is: '#{config.host}:#{config.port}/#{database}'"
+    console.log "MongoDB for '#{table}' is: '#{config.host}:#{config.port}/#{database}'"
     @client = new mongodb.Db(database, new mongodb.Server(config.host, config.port, {}), {safe: true})
 
     queue = Queue(1)
@@ -50,7 +50,7 @@ module.exports = class Connection
       doOpen = (callback) => @client.open callback
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB client open: #{collection_name}", doOpen, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB client open: #{table}", doOpen, callback)
 
     queue.defer (callback) =>
       if config.user
@@ -61,17 +61,19 @@ module.exports = class Connection
     queue.defer (callback) =>
 
       doConnectToCollection = (callback) =>
-        @client.collection collection_name, (err, collection) =>
+        @client.collection table, (err, collection) =>
           return callback(err) if err
 
-          # create indices
-          for key, value of @schema
-            if value.indexed
-              # console.log("Trying to ensureIndex for #{key} on #{collection_name}")
-              index_info = {}; index_info[key] = 1
-              collection.ensureIndex index_info, {background: true}, (err) =>
-                return new Error("MongoBackbone: Failed to indexed '#{key}' on #{collection_name}. Reason: #{err}") if err
-                console.log("MongoBackbone: Successfully indexed '#{key}' on #{collection_name}")
+          for field_name, field_info of @schema
+            continue unless _.isArray(field_info)
+            for info in field_info
+              continue unless info.indexed
+              do (field_name) ->
+                index_info = {}; index_info[field_name] = 1
+                collection.ensureIndex index_info, {background: true}, (err) =>
+                  return new Error("MongoBackbone: Failed to indexed '#{field_name}' on #{table}. Reason: #{err}") if err
+                  console.log("MongoBackbone: Successfully indexed '#{field_name}' on #{table}")
+              break
 
           # deal with waiting requests
           collection_requests = _.clone(@collection_requests); @collection_requests = []
@@ -80,7 +82,7 @@ module.exports = class Connection
           callback()
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{collection_name}", doConnectToCollection, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{table}", doConnectToCollection, callback)
 
     queue.await (err) =>
       if err

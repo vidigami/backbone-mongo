@@ -7,7 +7,9 @@ backboneSync = require '../../backbone_sync'
 
 class Thing extends Backbone.Model
   sync: backboneSync(Thing)
-  url: require('../config/database')['test']
+  url: require('../config/databases/things')['test']
+  @schema:
+    id: [indexed: true]
 
 adapters =
   bbCallback: (callback) -> return {success: (-> callback()), error: (-> callback(new Error("failed")))}
