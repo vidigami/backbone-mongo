@@ -11,107 +11,43 @@ _extractQueryArgs = (args, query_optional) ->
   query_args[0] = @backbone_adapter.attributesToDoc(query_args[0])
   return [query_args, query_args.pop()]
 
+CLASS_METHODS = [
+  'count', 'destroy', 'findOne', 'find', 'findDocs', 'findCursor', 'findOneNearDate'
+  'parseRequestQuery'
+  'docToModel', 'docsToModels', 'collection'
+  'initialize'
+]
+
 module.exports = class BackboneSync
 
   constructor: (@model_type) ->
-    @model_type.count = (optional_query, callback) =>
-      [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
 
-      @_collection (err, collection) =>
-        return callback(err) if err
-        query_args.push (err, cursor) =>
-          return callback(err) if err
-          cursor.count callback
-        collection.find.apply(collection, query_args)
+    # publish methods on the model class
+    @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS
 
-    @model_type.destroy = (optional_query, callback) =>
-      [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
-      query_args.push(callback)
+    # configure the adapter for converting between types and ids
+    schema = _.result(@model_type, 'schema') or {}
+    for field_name, field_info of schema
+      continue if (field_name isnt 'id') or not _.isArray(field_info)
+      for info in field_info
+        if info.manual_id
+          @backbone_adapter = require './lib/document_adapter_no_mongo_id'
+          break
+      break
+    @backbone_adapter = require './lib/document_adapter_mongo_id' if not @backbone_adapter # default is using the mongodb adapter
+    @model_type.backbone_adapter = @backbone_adapter
 
-      @_collection (err, collection) =>
-        return callback(err) if err
-        collection.remove.apply(collection, query_args)
+  initialize: (model) =>
+    return if @connection
+    model or= (new @model_type()) # dummy model to retrieve the url on collection functions
+    return callback(new Error "Missing url for model") unless url = _.result(model, 'url')
 
-    @model_type.findOne = (query, callback) =>
-      @_collection (err, collection) =>
-        return callback(err) if err
-        collection.findOne @backbone_adapter.attributesToDoc(query), (err, doc) =>
-          if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model_type))
+    schema = _.result(@model_type, 'schema') or {}
+    @connection = new Connection(url, schema)
 
-    @model_type.find = (query_args_callback) =>
-      [query_args, callback] = _extractQueryArgs.call(this, arguments)
-
-      @_collection (err, collection) =>
-        return callback(err) if err
-        collection.find.apply(collection, query_args).toArray (err, docs) =>
-          if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type)))
-
-    @model_type.findDocs = (query_args_callback) =>
-      [query_args, callback] = _extractQueryArgs.call(this, arguments)
-
-      @_collection (err, collection) =>
-        return callback(err) if err
-        collection.find.apply(collection, query_args).toArray(callback)
-
-    @model_type.findCursor = (query_args_callback) =>
-      [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
-
-      @_collection (err, collection) =>
-        return callback(err) if err
-        callback(null, collection.find.apply(collection, query_args))
-
-    @model_type.parseRequestQuery = (req) =>
-      query = if req.query then _.clone(req.query) else {}
-      (query[key] = JSON.parse(value) for key, value of query) if _.isObject(query)
-      return query
-
-    # options:
-    #  @key: default 'created_at'
-    #  @reverse: default false
-    #  @date: default now
-    #  @query: default none
-    @model_type.findOneNearDate = (options, callback) =>
-      key = options.key or 'created_at'
-      date = options.date or moment.utc().toDate()
-      query = _.clone(options.query or {})
-
-      findForward = (callback) =>
-        query[key] = {$lte: date.toISOString()}
-        @model_type.findCursor query, (err, cursor) =>
-          return callback(err) if err
-
-          cursor.limit(1).sort([[key, 'desc']]).toArray (err, docs) =>
-            return callback(err) if err
-            return callback(null, null) unless docs.length
-
-            callback(null, @model_type.docsToModels(docs)[0])
-
-      findReverse = (callback) =>
-        query[key] = {$gte: date.toISOString()}
-        @model_type.findCursor query, (err, cursor) =>
-          return callback(err) if err
-
-          cursor.limit(1).sort([[key, 'asc']]).toArray (err, docs) =>
-            return callback(err) if err
-            return callback(null, null) unless docs.length
-
-            callback(null, @model_type.docsToModels(docs)[0])
-
-      if options.reverse
-        findReverse (err, model) =>
-          return callback(err) if err
-          return callback(null, model) if model
-          findForward callback
-      else
-        findForward (err, model) =>
-          return callback(err) if err
-          return callback(null, model) if model
-          findReverse callback
-
-    @model_type.docToModel = (doc) => @backbone_adapter.docToModel(doc, @model_type)
-    @model_type.docsToModels = (docs) => _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type))
-    @model_type.collection = (callback) => @_collection(callback)
-
+  ###################################
+  # Classic Backbone Sync
+  ###################################
   read: (model, options) ->
     @_collection model, (err, collection) =>
       return options.error?(err) if err
@@ -172,31 +108,112 @@ module.exports = class BackboneSync
       collection.remove @backbone_adapter.modelFindQuery(model), (err, doc) =>
         if err then options.error?(model, err, options) else options.success?(model, {}, options)
 
+  ###################################
+  # Collection Extensions
+  ###################################
+  count: (optional_query, callback) ->
+    [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
+
+    @_collection (err, collection) =>
+      return callback(err) if err
+      query_args.push (err, cursor) =>
+        return callback(err) if err
+        cursor.count callback
+      collection.find.apply(collection, query_args)
+
+  destroy: (optional_query, callback) ->
+    [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
+    query_args.push(callback)
+
+    @_collection (err, collection) =>
+      return callback(err) if err
+      collection.remove.apply(collection, query_args)
+
+  findOne: (query, callback) ->
+    @_collection (err, collection) =>
+      return callback(err) if err
+      collection.findOne @backbone_adapter.attributesToDoc(query), (err, doc) =>
+        if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model_type))
+
+  find: (query_args_callback) ->
+    [query_args, callback] = _extractQueryArgs.call(this, arguments)
+
+    @_collection (err, collection) =>
+      return callback(err) if err
+      collection.find.apply(collection, query_args).toArray (err, docs) =>
+        if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type)))
+
+  findDocs: (query_args_callback) ->
+    [query_args, callback] = _extractQueryArgs.call(this, arguments)
+
+    @_collection (err, collection) =>
+      return callback(err) if err
+      collection.find.apply(collection, query_args).toArray(callback)
+
+  findCursor: (query_args_callback) ->
+    [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
+
+    @_collection (err, collection) =>
+      return callback(err) if err
+      callback(null, collection.find.apply(collection, query_args))
+
+  parseRequestQuery: (req) ->
+    query = if req.query then _.clone(req.query) else {}
+    (query[key] = JSON.parse(value) for key, value of query) if _.isObject(query)
+    return query
+
+  # options:
+  #  @key: default 'created_at'
+  #  @reverse: default false
+  #  @date: default now
+  #  @query: default none
+  findOneNearDate: (options, callback) ->
+    key = options.key or 'created_at'
+    date = options.date or moment.utc().toDate()
+    query = _.clone(options.query or {})
+
+    findForward = (callback) =>
+      query[key] = {$lte: date.toISOString()}
+      @model_type.findCursor query, (err, cursor) =>
+        return callback(err) if err
+
+        cursor.limit(1).sort([[key, 'desc']]).toArray (err, docs) =>
+          return callback(err) if err
+          return callback(null, null) unless docs.length
+
+          callback(null, @model_type.docsToModels(docs)[0])
+
+    findReverse = (callback) =>
+      query[key] = {$gte: date.toISOString()}
+      @model_type.findCursor query, (err, cursor) =>
+        return callback(err) if err
+
+        cursor.limit(1).sort([[key, 'asc']]).toArray (err, docs) =>
+          return callback(err) if err
+          return callback(null, null) unless docs.length
+
+          callback(null, @model_type.docsToModels(docs)[0])
+
+    if options.reverse
+      findReverse (err, model) =>
+        return callback(err) if err
+        return callback(null, model) if model
+        findForward callback
+    else
+      findForward (err, model) =>
+        return callback(err) if err
+        return callback(null, model) if model
+        findReverse callback
+
+  docToModel: (doc) -> @backbone_adapter.docToModel(doc, @model_type)
+  docsToModels: (docs) -> _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type))
+  collection: (callback) -> @_collection(callback)
+
+  ###################################
+
   _collection: (model, callback) ->
     (callback = model; model = null) if arguments.length is 1
-
-    initialize = =>
-      console.log "initalize"
-
-      model or= (new @model_type()) # dummy model to retrieve the url on collection functions
-      return callback(new Error "Missing url for model") unless url = _.result(model, 'url')
-      schema = _.result(@model_type, 'schema') or {}
-
-      console.log util.inspect(schema)
-      for field_name, field_info of schema
-        continue if (field_name isnt 'id') or not _.isArray(field_info)
-        for info in field_info
-          if info.manual_id
-            @backbone_adapter = require './lib/document_adapter_no_mongo_id'
-            break
-        break
-
-      @backbone_adapter = require './lib/document_adapter_mongo_id' if not @backbone_adapter # default is using the mongodb adapter
-      @model_type.backbone_adapter = @backbone_adapter
-      @connection = new Connection(url, schema)
-
-    # lazy create a connection on the first request
-    initialize() unless @connection
+    @initialize(model) unless @connection
     @connection.collection(callback)
 
 # options

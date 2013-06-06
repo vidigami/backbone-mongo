@@ -7,8 +7,6 @@ Query = require '../../query'
 class QueryThing extends Backbone.Model
   sync: backboneSync(QueryThing)
   url: require('../config/databases/query_things')['test']
-  @schema:
-    id: [indexed: true]
 
 describe "Query", ->
 
