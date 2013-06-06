@@ -37,7 +37,7 @@ module.exports = class BackboneSync
     @backbone_adapter = require './lib/document_adapter_mongo_id' if not @backbone_adapter # default is using the mongodb adapter
     @model_type.backbone_adapter = @backbone_adapter
 
-  initialize: (model) =>
+  initialize: (model) ->
     return if @connection
     model or= (new @model_type()) # dummy model to retrieve the url on collection functions
     return callback(new Error "Missing url for model") unless url = _.result(model, 'url')
