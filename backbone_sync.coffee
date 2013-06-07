@@ -7,13 +7,10 @@ Cursor = require './lib/cursor'
 Connection = require './lib/connection'
 
 CLASS_METHODS = [
+  'initialize'
   'cursor', 'find'
   'count', 'all', 'destroy'
   'findOneNearDate'
-  # 'count', 'destroy', 'findOne', 'find', 'findDocs', 'findCursor', 'findOneNearDate'
-  # 'parseRequestQuery'
-  # 'docToModel', 'docsToModels', 'collection'
-  'initialize'
 ]
 
 module.exports = class BackboneSync
@@ -52,13 +49,16 @@ module.exports = class BackboneSync
 
       # a collection
       if model.models
-        collection.find().toArray (err, docs) =>
-          if err then options.error?(err) else options.success?(_.map(docs, @backbone_adapter.docToAttributes))
+        @cursor().toJSON (err, json) ->
+          return options.error?(err) if err
+          options.success?(json)
 
       # a model
       else
-        collection.findOne @backbone_adapter.modelFindQuery(model), (err, doc) =>
-          if err then options.error?(err) else options.success?(@backbone_adapter.docToAttributes(doc))
+        @cursor(@backbone_adapter.modelFindQuery(model)).limit(1).toJSON (err, json) ->
+          return options.error?(err) if err
+          return options.error?(new Error "Model not found. Id #{model.get('id')}") if json.length isnt 1
+          options.success?(json)
 
   create: (model, options) ->
     @_collection model, (err, collection) =>
@@ -101,10 +101,9 @@ module.exports = class BackboneSync
           options.success?(@backbone_adapter.docToAttributes(doc))
 
   delete: (model, options) ->
-    @_collection model, (err, collection) =>
-      return options.error?(err) if err
-      collection.remove @backbone_adapter.modelFindQuery(model), (err, doc) =>
-        if err then options.error?(model, err, options) else options.success?(model, {}, options)
+    @destroy @backbone_adapter.modelFindQuery(model), (err) ->
+      return options.error?(model, err, options) if err
+      options.success?(model, {}, options)
 
   ###################################
   # Collection Extensions
@@ -173,10 +172,8 @@ module.exports = class BackboneSync
         return callback(null, model) if model
         findReverse callback
 
-  # docToModel: (doc) -> @backbone_adapter.docToModel(doc, @model_type)
-  # docsToModels: (docs) -> _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type))
-  # collection: (callback) -> @_collection(callback)
-
+  ###################################
+  # Internal
   ###################################
 
   _collection: (model, callback) ->

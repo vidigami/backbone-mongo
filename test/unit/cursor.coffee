@@ -76,9 +76,7 @@ describe 'Model.cursor', ->
       assert.ok(!err, 'no errors')
 
       limit = 3
-      console.log "HERE 1"
       Album.cursor({name: ALBUM_NAME}).limit(limit).toModels (err, models) ->
-        console.log "HERE 2"
         assert.ok(!err, 'no errors')
         assert.ok(models, 'cursor toModels gives us models')
         assert.equal(models.length, limit, 'found models')
