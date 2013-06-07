@@ -3,23 +3,22 @@ assert = require 'assert'
 Queue = require 'queue-async'
 
 Backbone = require 'backbone'
-backboneSync = require '../../backbone_sync'
 
 class Thing extends Backbone.Model
   @schema: {id: [indexed: true]}
-  sync: backboneSync(Thing)
+  sync: require('../../backbone_sync')(Thing)
   url: require('../config/databases/things')['test']
 
 adapters =
-  bbCallback: (callback) -> return {success: (-> callback()), error: (-> callback(new Error("failed")))}
+  bbCallback: (callback) -> return {success: ((model) -> callback(null, model)), error: (-> callback(new Error('failed')))}
 
-describe "BackboneSync", ->
+describe 'BackboneSync', ->
 
   beforeEach (done) ->
     Thing.destroy(done)
 
-  describe "save a model", ->
-    it "assign an id", (done) ->
+  describe 'save a model', ->
+    it 'assign an id', (done) ->
       bob = new Thing({name: 'Bob'})
       assert.equal(bob.get('name'), 'Bob', 'name before save is Bob')
       assert.ok(!bob.get('id'), 'id before save doesn\'t exist')
@@ -35,7 +34,7 @@ describe "BackboneSync", ->
       queue.await done
 
   describe 'counts models', ->
-    it "counts by query", (done) ->
+    it 'counts by query', (done) ->
       bob = new Thing({name: 'Bob'})
 
       queue = new Queue(1)
@@ -58,7 +57,7 @@ describe "BackboneSync", ->
 
       queue.await done
 
-    it "counts by query with multiple", (done) ->
+    it 'counts by query with multiple', (done) ->
       bob = new Thing({name: 'Bob'})
       fred = new Thing({name: 'Fred'})
 
@@ -89,7 +88,7 @@ describe "BackboneSync", ->
       queue.await done
 
   # sync: new BackboneSync({database_config: require('../config/database'), collection: 'bobs', model: Thing, manual_id: true, indices: {id: 1}})
-  # TODO: describe "use a manual id", ->
-  #   it "assign an id", (done) ->
+  # TODO: describe 'use a manual id', ->
+  #   it 'assign an id', (done) ->
 
-  # TODO: describe "add an index", ->
+  # TODO: describe 'add an index', ->

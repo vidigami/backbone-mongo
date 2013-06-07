@@ -1,18 +1,17 @@
 assert = require 'assert'
 
 Backbone = require 'backbone'
-backboneSync = require '../../backbone_sync'
 Query = require '../../query'
 
 class QueryThing extends Backbone.Model
-  sync: backboneSync(QueryThing)
+  sync: require('../../backbone_sync')(QueryThing)
   url: require('../config/databases/query_things')['test']
 
-describe "Query", ->
+describe 'Query', ->
 
   # TODO: before delete the collection
 
-  it "finds an object", (done) ->
+  it 'finds an object', (done) ->
     thing = new QueryThing({name: 'Bob'})
     thing.save {}, {
       success: ->
