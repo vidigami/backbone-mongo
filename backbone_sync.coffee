@@ -3,6 +3,7 @@ _ = require 'underscore'
 moment = require 'moment'
 Queue = require 'queue-async'
 
+Cursor = require './lib/cursor'
 Connection = require './lib/connection'
 
 _extractQueryArgs = (args, query_optional) ->
@@ -12,8 +13,9 @@ _extractQueryArgs = (args, query_optional) ->
   return [query_args, query_args.pop()]
 
 CLASS_METHODS = [
-  'count', 'destroy', 'findOne', 'find', 'findDocs', 'findCursor', 'findOneNearDate'
-  'parseRequestQuery'
+  'count', 'all', 'cursor', 'destroy', 'find', 'findOneNearDate'
+  # 'count', 'destroy', 'findOne', 'find', 'findDocs', 'findCursor', 'findOneNearDate'
+  # 'parseRequestQuery'
   'docToModel', 'docsToModels', 'collection'
   'initialize'
 ]
@@ -111,6 +113,8 @@ module.exports = class BackboneSync
   ###################################
   # Collection Extensions
   ###################################
+  cursor: (query={}) -> return new Cursor(@, query)
+
   count: (optional_query, callback) ->
     [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
 
@@ -129,19 +133,19 @@ module.exports = class BackboneSync
       return callback(err) if err
       collection.remove.apply(collection, query_args)
 
-  findOne: (query, callback) ->
-    @_collection (err, collection) =>
-      return callback(err) if err
-      collection.findOne @backbone_adapter.attributesToDoc(query), (err, doc) =>
-        if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model_type))
+  # findOne: (query, callback) ->
+  #   @_collection (err, collection) =>
+  #     return callback(err) if err
+  #     collection.findOne @backbone_adapter.attributesToDoc(query), (err, doc) =>
+  #       if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model_type))
 
-  find: (query_args_callback) ->
-    [query_args, callback] = _extractQueryArgs.call(this, arguments)
+  all: (callback) -> @cursor({}).toModels callback
+  find: (query, callback) -> @cursor(query).toModels callback
 
-    @_collection (err, collection) =>
-      return callback(err) if err
-      collection.find.apply(collection, query_args).toArray (err, docs) =>
-        if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type)))
+    # @_collection (err, collection) =>
+    #   return callback(err) if err
+    #   collection.find.apply(collection, query_args).toArray (err, docs) =>
+    #     if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type)))
 
   findDocs: (query_args_callback) ->
     [query_args, callback] = _extractQueryArgs.call(this, arguments)
