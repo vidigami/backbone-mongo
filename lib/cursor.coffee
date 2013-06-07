@@ -38,6 +38,7 @@ module.exports = class Cursor
   toJSON: (callback) ->
     @_buildCursor (err, cursor) =>
       return callback(err) if err
+      return cursor.count(callback) if @_cursor.$count
 
       # TODO: make the database query for specific attributes for values and select
       cursor.toArray (err, docs) =>
@@ -54,7 +55,7 @@ module.exports = class Cursor
         else if @_cursor.$white_list
           json = _.map(json, (item) => _.pick(item, @_cursor.$white_list))
         callback(null, json)
-    return @
+    return # terminating
 
   toModels: (callback) ->
     @toJSON (err, json) =>
@@ -62,6 +63,24 @@ module.exports = class Cursor
       return callback(new Error "Cannot call toModels on cursor with values. Values: #{util.inspect(@_cursor.$values)}") if @_cursor.$values
       return callback(null, if json then (new @model_type(@model_type::parse(json))) else null) if @_cursor.$first
       callback(null, (new @model_type(@model_type::parse(attributes)) for attributes in json))
+    return # terminating
+
+  value: (callback) ->
+    if @_cursor.$first
+      @toModels(callback)
+    else if @_cursor.$count
+      @_buildCursor (err, cursor) =>
+        return callback(err) if err
+        cursor.count(callback)
+     else
+       callback(new Error "Cursor does not refer to a single value")
+    return # terminating
+
+  count: (callback) ->
+    @_buildCursor (err, cursor) =>
+      return callback(err) if err
+      cursor.count(callback)
+    return # terminating
 
   # toResponse: (results) ->
   #   if @_cursor.$count

@@ -6,17 +6,13 @@ Queue = require 'queue-async'
 Cursor = require './lib/cursor'
 Connection = require './lib/connection'
 
-_extractQueryArgs = (args, query_optional) ->
-  return [[{}], args[0]] if query_optional and args.length is 1
-  query_args = Array.prototype.slice.call(args)
-  query_args[0] = @backbone_adapter.attributesToDoc(query_args[0])
-  return [query_args, query_args.pop()]
-
 CLASS_METHODS = [
-  'count', 'all', 'cursor', 'destroy', 'find', 'findOneNearDate'
+  'cursor', 'find'
+  'count', 'all', 'destroy'
+  'findOneNearDate'
   # 'count', 'destroy', 'findOne', 'find', 'findDocs', 'findCursor', 'findOneNearDate'
   # 'parseRequestQuery'
-  'docToModel', 'docsToModels', 'collection'
+  # 'docToModel', 'docsToModels', 'collection'
   'initialize'
 ]
 
@@ -115,56 +111,24 @@ module.exports = class BackboneSync
   ###################################
   cursor: (query={}) -> return new Cursor(@, query)
 
-  count: (optional_query, callback) ->
-    [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
+  find: (query, callback) ->
+    [query, callback] = [{}, query] if arguments.length is 1
+    @cursor(query).toModels(callback)
 
-    @_collection (err, collection) =>
-      return callback(err) if err
-      query_args.push (err, cursor) =>
-        return callback(err) if err
-        cursor.count callback
-      collection.find.apply(collection, query_args)
-
-  destroy: (optional_query, callback) ->
-    [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
-    query_args.push(callback)
-
-    @_collection (err, collection) =>
-      return callback(err) if err
-      collection.remove.apply(collection, query_args)
-
-  # findOne: (query, callback) ->
-  #   @_collection (err, collection) =>
-  #     return callback(err) if err
-  #     collection.findOne @backbone_adapter.attributesToDoc(query), (err, doc) =>
-  #       if err then callback(err) else callback(null, @backbone_adapter.docToModel(doc, @model_type))
-
+  ###################################
+  # Convenience Functions
+  ###################################
   all: (callback) -> @cursor({}).toModels callback
-  find: (query, callback) -> @cursor(query).toModels callback
 
-    # @_collection (err, collection) =>
-    #   return callback(err) if err
-    #   collection.find.apply(collection, query_args).toArray (err, docs) =>
-    #     if err then callback?(err) else callback(null, _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type)))
+  count: (query, callback) ->
+    [query, callback] = [{}, query] if arguments.length is 1
+    @cursor(query).count(callback)
 
-  findDocs: (query_args_callback) ->
-    [query_args, callback] = _extractQueryArgs.call(this, arguments)
-
+  destroy: (query, callback) ->
+    [query, callback] = [{}, query] if arguments.length is 1
     @_collection (err, collection) =>
       return callback(err) if err
-      collection.find.apply(collection, query_args).toArray(callback)
-
-  findCursor: (query_args_callback) ->
-    [query_args, callback] = _extractQueryArgs.call(this, arguments, true)
-
-    @_collection (err, collection) =>
-      return callback(err) if err
-      callback(null, collection.find.apply(collection, query_args))
-
-  parseRequestQuery: (req) ->
-    query = if req.query then _.clone(req.query) else {}
-    (query[key] = JSON.parse(value) for key, value of query) if _.isObject(query)
-    return query
+      collection.remove @backbone_adapter.attributesToDoc(query), callback
 
   # options:
   #  @key: default 'created_at'
@@ -209,9 +173,9 @@ module.exports = class BackboneSync
         return callback(null, model) if model
         findReverse callback
 
-  docToModel: (doc) -> @backbone_adapter.docToModel(doc, @model_type)
-  docsToModels: (docs) -> _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type))
-  collection: (callback) -> @_collection(callback)
+  # docToModel: (doc) -> @backbone_adapter.docToModel(doc, @model_type)
+  # docsToModels: (docs) -> _.map(docs, (doc) => @backbone_adapter.docToModel(doc, @model_type))
+  # collection: (callback) -> @_collection(callback)
 
   ###################################
 

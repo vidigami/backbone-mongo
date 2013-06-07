@@ -17,13 +17,10 @@ module.exports = class BatchUtils
         return callback() unless models.length
         event_emitter.emit 'progress', "Start batch length: #{models.length}"
 
-        # closure
-        doActionFn = (model) ->
-          return (callback) -> fn(model, callback)
-
         # batch operations on each
         queue = new Queue(parallel_count)
-        queue.defer doActionFn(model) for model in models
+        for model in models
+          do (model) -> queue.defer (callback) -> fn(model, callback)
         queue.await (err) ->
           return callback(err) if err
           query.$offset += query.$limit

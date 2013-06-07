@@ -22,7 +22,7 @@ setAllNames = (model_type, name, callback) ->
     queue = new Queue()
     for album in all_models
       do (album) -> queue.defer (callback) -> album.save {name: name}, adapters.bbCallback callback
-    queue.await (err) ->
+    queue.await callback
 
 describe 'Model.find', ->
 
