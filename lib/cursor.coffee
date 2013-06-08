@@ -4,8 +4,6 @@ JSONUtils = require './json_utils'
 
 module.exports = class Cursor
   constructor: (@backbone_sync, query) ->
-    console.log "CURSOR CREATED: #{util.inspect(query)}"
-
     @backbone_adapter = @backbone_sync.backbone_adapter
     @model_type = @backbone_sync.model_type
 
@@ -14,13 +12,12 @@ module.exports = class Cursor
       @_cursor = @_parseCursorQuery(query)
     else
       @_find = {id: query}
-      @_cursor = {$first: true}
+      @_cursor = {$one: true}
 
   offset: (offset) -> @_cursor.$offset = offset; return @
   limit: (limit) -> @_cursor.$limit = limit; return @
 
   whiteList: (keys) ->
-    console.log "Whitelist: #{util.inspect(keys)}"
     keys = [keys] unless _.isArray(keys)
     @_cursor.$white_list = if @_cursor.$white_list then _.intersection(@_cursor.$white_list, keys) else keys
     return @
@@ -40,19 +37,13 @@ module.exports = class Cursor
   ##############################################
 
   toJSON: (callback) ->
-    console.log "toJSON"
     @_buildCursor (err, cursor) =>
-
-      console.log "_buildCursor"
-
       return callback(err) if err
       return cursor.count(callback) if @_cursor.$count
 
       cursor.toArray (err, docs) =>
-        console.log "toArray"
-
         return callback(err) if err
-        return callback(null, if docs.length then @backbone_adapter.docToAttributes(docs[0]) else null) if @_cursor.$first
+        return callback(null, if docs.length then @backbone_adapter.docToAttributes(docs[0]) else null) if @_cursor.$one
         json = _.map(docs, (doc) => @backbone_adapter.docToAttributes(doc))
 
         # TODO: OPTIMIZE TO REMOVE 'id' and '_rev' if needed
@@ -64,8 +55,6 @@ module.exports = class Cursor
           json = _.map(json, (item) => _.pick(item, $select))
         else if @_cursor.$white_list
           json = _.map(json, (item) => _.pick(item, @_cursor.$white_list))
-
-        console.log "callback: #{callback}\njson: #{util.inspect(json)}"
         callback(null, json)
     return # terminating
 
@@ -73,12 +62,12 @@ module.exports = class Cursor
     @toJSON (err, json) =>
       return callback(err) if err
       return callback(new Error "Cannot call toModels on cursor with values. Values: #{util.inspect(@_cursor.$values)}") if @_cursor.$values
-      return callback(null, if json then (new @model_type(@model_type::parse(json))) else null) if @_cursor.$first
+      return callback(null, if json then (new @model_type(@model_type::parse(json))) else null) if @_cursor.$one
       callback(null, (new @model_type(@model_type::parse(attributes)) for attributes in json))
     return # terminating
 
   value: (callback) ->
-    if @_cursor.$first
+    if @_cursor.$one
       @toModels(callback)
     else if @_cursor.$count
       @_buildCursor (err, cursor) =>
