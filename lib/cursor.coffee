@@ -6,6 +6,7 @@ module.exports = class Cursor
   constructor: (@backbone_sync, query) ->
     @backbone_adapter = @backbone_sync.backbone_adapter
     @model_type = @backbone_sync.model_type
+    @connection = @backbone_sync.connection
 
     if _.isObject(query)
       @_find = @_parseFindQuery(query)
@@ -36,27 +37,8 @@ module.exports = class Cursor
   # Execution of the Query
   ##############################################
 
-  toJSON: (callback) ->
-    @_buildCursor (err, cursor) =>
-      return callback(err) if err
-      return cursor.count(callback) if @_cursor.$count
-
-      cursor.toArray (err, docs) =>
-        return callback(err) if err
-        return callback(null, if docs.length then @backbone_adapter.docToAttributes(docs[0]) else null) if @_cursor.$one
-        json = _.map(docs, (doc) => @backbone_adapter.docToAttributes(doc))
-
-        # TODO: OPTIMIZE TO REMOVE 'id' and '_rev' if needed
-        if @_cursor.$values
-          $values = if @_cursor.$white_list then _.intersection(@_cursor.$values, @_cursor.$white_list) else @_cursor.$values
-          json = (((item[key] for key in $values when item.hasOwnProperty(key))) for item in json)
-        else if @_cursor.$select
-          $select = if @_cursor.$white_list then _.intersection(@_cursor.$select, @_cursor.$white_list) else @_cursor.$select
-          json = _.map(json, (item) => _.pick(item, $select))
-        else if @_cursor.$white_list
-          json = _.map(json, (item) => _.pick(item, @_cursor.$white_list))
-        callback(null, json)
-    return # terminating
+  # TEMPLATE METHOD
+  # toJSON: (callback) ->
 
   toModels: (callback) ->
     @toJSON (err, json) =>
@@ -67,48 +49,19 @@ module.exports = class Cursor
     return # terminating
 
   value: (callback) ->
-    if @_cursor.$one
-      @toModels(callback)
-    else if @_cursor.$count
-      @_buildCursor (err, cursor) =>
-        return callback(err) if err
-        cursor.count(callback)
-     else
-       callback(new Error "Cursor does not refer to a single value")
+    return @toModels(callback) if @_cursor.$one
+    return @toJSON(callback, @_cursor.$count) if @_cursor.$count
+    callback(new Error "Cursor does not refer to a single value")
     return # terminating
 
-  count: (callback) ->
-    @_buildCursor (err, cursor) =>
-      return callback(err) if err
-      cursor.count(callback)
-    return # terminating
-
-  ##############################################
-  # Intervals
-  ##############################################
-  intervalIterator: (key, callback) ->
-    return callback(new Error("missing find time key")) unless @_find.hasOwnProperty(key)
-
-    try
-      return callback(null, new IntervalIterator({interval_type: @_cursor.$interval_type, interval_length: @_cursor.$interval_length, key: key, range_query: @_find[key], model_type: @model_type}))
-    catch err
-      return callback err
+  count: (callback) -> return @toJSON(callback, true)
 
   ##############################################
   # Query Parsing
   ##############################################
   _parseFindQuery: (raw_query) ->
     find = {}
-    for key, value of raw_query
-      if key[0] isnt '$'
-        find[key] = JSONUtils.JSONToValue(value)
-      else if key is '$ids'
-        ids = @_parseArray(value)
-        if ids
-          find._id = {$in: _.map(ids, (id) -> new ObjectID("#{id}"))}
-        else
-          console.log("Failed to parse $ids: #{value}")
-
+    (find[key] = JSONUtils.JSONToValue(value) if key[0] isnt '$') for key, value of raw_query
     return find
 
   _parseCursorQuery: (raw_query) ->
@@ -123,12 +76,16 @@ module.exports = class Cursor
         when '$select', '$values'
           if _.isString(value) and value.length and value[0] is '['
             cursor[key] = @_parseArray(value)
-            console.log("Failed to parse $select: #{value}") unless cursor.$select
+            console.log("Failed to parse $select: #{value}") unless cursor[key]
           else
             cursor[key] = JSONUtils.JSONToValue(value)
             cursor[key] = [cursor[key]] unless _.isArray(cursor[key])
 
-        # parse even if you don't recognize it so others can use it
+        when '$ids'
+          cursor[key] = @_parseArray(value)
+          console.log("Failed to parse $ids: #{value}") unless cursor[key]
+
+       # parse even if you don't recognize it so others can use it
         else
           cursor[key] = JSONUtils.JSONToValue(value)
 
@@ -137,34 +94,6 @@ module.exports = class Cursor
   _parseArray: (value) ->
     try (array = JSON.parse(value)) catch e
     return if array and _.isArray(array) then array else undefined
-
-  _buildCursor: (callback) ->
-    # build the cursor
-    @backbone_sync._collection (err, collection) =>
-      return callback(err) if err
-      args = [@backbone_adapter.attributesToDoc(@_find)]
-
-      # only select specific fields
-      if @_cursor.$values
-        $fields = if @_cursor.$white_list then _.intersection(@_cursor.$values, @_cursor.$white_list) else @_cursor.$values
-      else if @_cursor.$select
-        $fields = if @_cursor.$white_list then _.intersection(@_cursor.$select, @_cursor.$white_list) else @_cursor.$select
-      else if @_cursor.$white_list
-        $fields = @_cursor.$white_list
-      args.push($fields) if $fields
-
-      # add callback and call
-      args.push (err, cursor) =>
-        return callback(err) if err
-        cursor = cursor.sort(@_cursor.$sort) if @_cursor.$sort
-        cursor = cursor.skip(@_cursor.$offset) if @_cursor.$offset
-        if @_cursor.$one
-          cursor = cursor.limit(1)
-        else if @_cursor.$limit
-          cursor = cursor.limit(@_cursor.$limit)
-        callback(null, cursor)
-      collection.find.apply(collection, args)
-
 
   # toResponse: (results) ->
   #   if @_cursor.$count
@@ -182,19 +111,3 @@ module.exports = class Cursor
   #       return _.map(results, (value) => _.map(@_cursor.$select, (key) -> value[key])) if @_cursor.$select.length > 1
   #       return _.pluck(results, @_cursor.$select[0]) if @_cursor.$select[0]
   #   return results
-
-  # @_parseQueries: (query) ->
-  #   unless _.isObject(query)
-  #     single_item = true
-  #     query = {id: query}
-
-  #   queries = {find: {}, cursor: {}}
-  #   for key, value of query
-  #     if key[0] is '$'
-  #       if key is '$select' or key is '$values'
-  #         queries.cursor[key] = if _.isArray(value) then value else [value]
-  #       else
-  #         queries.cursor[key] = value
-  #     else
-  #       queries.find[key] = value
-  #   return queries

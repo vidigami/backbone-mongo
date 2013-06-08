@@ -1,6 +1,6 @@
 ObjectID =  require('mongodb').ObjectID
 JSONUtils = require './json_utils'
-Store = require './store'
+BackboneRelational = require './backbone_relational'
 
 module.exports = class DocumentAdapter_MongoId
 
@@ -8,13 +8,13 @@ module.exports = class DocumentAdapter_MongoId
 
   @modelFindQuery: (model) -> return {_id: new ObjectID("#{model.get('id')}")}
 
-  @docToModel: (doc, model_type) ->
+  @nativeToModel: (doc, model_type) ->
     return null unless doc
 
     # work around for Backbone Relational
-    return Store.findOrCreate(model_type, (new model_type()).parse(@docToAttributes(doc)))
+    return BackboneRelational.findOrCreate(model_type, (new model_type()).parse(@nativeToAttributes(doc)))
 
-  @docToAttributes: (doc) ->
+  @nativeToAttributes: (doc) ->
     return {} unless doc
     for key, value of doc
       if key is '_id'
@@ -24,7 +24,7 @@ module.exports = class DocumentAdapter_MongoId
         doc[key] = JSONUtils.JSONToValue(value)
     return doc
 
-  @attributesToDoc: (attributes) ->
+  @attributesToNative: (attributes) ->
     return {} unless attributes
     for key, value of attributes
       if key is 'id'

@@ -3,7 +3,7 @@ _ = require 'underscore'
 moment = require 'moment'
 Queue = require 'queue-async'
 
-Cursor = require './lib/cursor'
+MongoCursor = require './lib/mongo_cursor'
 Connection = require './lib/connection'
 
 CLASS_METHODS = [
@@ -16,54 +16,48 @@ CLASS_METHODS = [
 module.exports = class BackboneSync
 
   constructor: (@model_type) ->
-
-    # publish methods on the model class
-    @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS
+    @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS # publish methods on the model class
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
-  initialize: (model) ->
-    return if @connection
-    model or= (new @model_type()) # dummy model to retrieve the url on collection functions
-    return callback(new Error "Missing url for model") unless url = _.result(model, 'url')
-
+    throw new Error("Missing url for model") unless url = _.result((new @model_type()), 'url')
     schema = _.result(@model_type, 'schema') or {}
     @connection = new Connection(url, schema)
+
+  initialize: (model) ->
+    # TODO: add relations
 
   ###################################
   # Classic Backbone Sync
   ###################################
   read: (model, options) ->
-    @_collection model, (err, collection) =>
-      return options.error?(err) if err
+    # a collection
+    if model.models
+      @cursor().toJSON (err, json) ->
+        return options.error?(err) if err
+        options.success?(json)
 
-      # a collection
-      if model.models
-        @cursor().toJSON (err, json) ->
-          return options.error?(err) if err
-          options.success?(json)
-
-      # a model
-      else
-        @cursor(@backbone_adapter.modelFindQuery(model)).limit(1).toJSON (err, json) ->
-          return options.error?(err) if err
-          return options.error?(new Error "Model not found. Id #{model.get('id')}") if json.length isnt 1
-          options.success?(json)
+    # a model
+    else
+      @cursor(@backbone_adapter.modelFindQuery(model)).limit(1).toJSON (err, json) ->
+        return options.error?(err) if err
+        return options.error?(new Error "Model not found. Id #{model.get('id')}") if json.length isnt 1
+        options.success?(json)
 
   create: (model, options) ->
-    @_collection model, (err, collection) =>
+    @connection.collection (err, collection) =>
       return options.error?(err) if err
       return options.error?(new Error("new document has a non-empty revision")) if model.get('_rev')
-      doc = @backbone_adapter.attributesToDoc(model.toJSON()); doc._rev = 1 # start revisions
+      doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
         return options.error?(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
-        options.success?(@backbone_adapter.docToAttributes(docs[0]))
+        options.success?(@backbone_adapter.nativeToAttributes(docs[0]))
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
 
-    @_collection model, (err, collection) =>
+    @connection.collection (err, collection) =>
       return options.error?(err) if err
-      json = @backbone_adapter.attributesToDoc(model.toJSON())
+      json = @backbone_adapter.attributesToNative(model.toJSON())
       delete json._id if @backbone_adapter.idAttribute is '_id'
       find_query = @backbone_adapter.modelFindQuery(model)
       find_query._rev = json._rev
@@ -77,7 +71,7 @@ module.exports = class BackboneSync
         # look for removed attributes that need to be deleted
         expected_keys = _.keys(json); expected_keys.push('_id'); saved_keys = _.keys(doc)
         keys_to_delete = _.difference(saved_keys, expected_keys)
-        return options.success?(@backbone_adapter.docToAttributes(doc)) unless keys_to_delete.length
+        return options.success?(@backbone_adapter.nativeToAttributes(doc)) unless keys_to_delete.length
 
         # delete/unset attributes and update the revision
         find_query._rev = json._rev
@@ -87,7 +81,7 @@ module.exports = class BackboneSync
         collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$unset: keys, $set: {_rev: json._rev}}, {new: true}, (err, doc) =>
           return options.error?(new Error("Failed to update model. #{err}")) if err or not doc
           return options.error?(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
-          options.success?(@backbone_adapter.docToAttributes(doc))
+          options.success?(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
     @destroy @backbone_adapter.modelFindQuery(model), (err) ->
@@ -97,7 +91,7 @@ module.exports = class BackboneSync
   ###################################
   # Collection Extensions
   ###################################
-  cursor: (query={}) -> return new Cursor(@, query)
+  cursor: (query={}) -> return new MongoCursor(@, query)
 
   find: (query, callback) ->
     [query, callback] = [{}, query] if arguments.length is 1
@@ -113,10 +107,12 @@ module.exports = class BackboneSync
     @cursor(query).count(callback)
 
   destroy: (query, callback) ->
+    @initialize() unless @connection
+
     [query, callback] = [{}, query] if arguments.length is 1
-    @_collection (err, collection) =>
+    @connection.collection (err, collection) =>
       return callback(err) if err
-      collection.remove @backbone_adapter.attributesToDoc(query), callback
+      collection.remove @backbone_adapter.attributesToNative(query), callback
 
   # options:
   #  @key: default 'created_at'
@@ -164,12 +160,6 @@ module.exports = class BackboneSync
   ###################################
   # Internal
   ###################################
-
-  _collection: (model, callback) ->
-    (callback = model; model = null) if arguments.length is 1
-    @initialize(model) unless @connection
-    @connection.collection(callback)
-
   _selectAdapter: ->
     schema = _.result(@model_type, 'schema') or {}
     for field_name, field_info of schema
