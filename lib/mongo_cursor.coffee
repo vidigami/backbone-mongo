@@ -1,6 +1,7 @@
 util = require 'util'
 _ = require 'underscore'
-Cursor = require './cursor'
+
+Cursor = require 'backbone-node/cursor'
 
 module.exports = class MongoCursor extends Cursor
   ##############################################

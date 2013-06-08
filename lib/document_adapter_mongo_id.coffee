@@ -1,6 +1,6 @@
 ObjectID =  require('mongodb').ObjectID
-JSONUtils = require './json_utils'
-BackboneRelational = require './backbone_relational'
+JSONUtils = require 'backbone-node/json_utils'
+BackboneRelationalUtils = require 'backbone-node/lib/backbone_relational_utils'
 
 module.exports = class DocumentAdapter_MongoId
 
@@ -12,7 +12,7 @@ module.exports = class DocumentAdapter_MongoId
     return null unless doc
 
     # work around for Backbone Relational
-    return BackboneRelational.findOrCreate(model_type, model_type::parse(@nativeToAttributes(doc)))
+    return BackboneRelationalUtils.findOrCreate(model_type, model_type::parse(@nativeToAttributes(doc)))
 
   @nativeToAttributes: (doc) ->
     return {} unless doc
