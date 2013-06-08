@@ -4,6 +4,8 @@ JSONUtils = require './json_utils'
 
 module.exports = class Cursor
   constructor: (@backbone_sync, query) ->
+    console.log "CURSOR CREATED: #{util.inspect(query)}"
+
     @backbone_adapter = @backbone_sync.backbone_adapter
     @model_type = @backbone_sync.model_type
 
@@ -18,6 +20,7 @@ module.exports = class Cursor
   limit: (limit) -> @_cursor.$limit = limit; return @
 
   whiteList: (keys) ->
+    console.log "Whitelist: #{util.inspect(keys)}"
     keys = [keys] unless _.isArray(keys)
     @_cursor.$white_list = if @_cursor.$white_list then _.intersection(@_cursor.$white_list, keys) else keys
     return @
@@ -37,11 +40,17 @@ module.exports = class Cursor
   ##############################################
 
   toJSON: (callback) ->
+    console.log "toJSON"
     @_buildCursor (err, cursor) =>
+
+      console.log "_buildCursor"
+
       return callback(err) if err
       return cursor.count(callback) if @_cursor.$count
 
       cursor.toArray (err, docs) =>
+        console.log "toArray"
+
         return callback(err) if err
         return callback(null, if docs.length then @backbone_adapter.docToAttributes(docs[0]) else null) if @_cursor.$first
         json = _.map(docs, (doc) => @backbone_adapter.docToAttributes(doc))
@@ -55,6 +64,8 @@ module.exports = class Cursor
           json = _.map(json, (item) => _.pick(item, $select))
         else if @_cursor.$white_list
           json = _.map(json, (item) => _.pick(item, @_cursor.$white_list))
+
+        console.log "callback: #{callback}\njson: #{util.inspect(json)}"
         callback(null, json)
     return # terminating
 
