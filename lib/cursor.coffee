@@ -82,23 +82,6 @@ module.exports = class Cursor
       cursor.count(callback)
     return # terminating
 
-  # toResponse: (results) ->
-  #   if @_cursor.$count
-  #     return 0 unless results
-  #     return results if _.isNumber(results)
-  #     return results.length if _.isArray(results)
-  #     return 1
-
-  #   if @_cursor.$limit is 1
-  #     if @_cursor.$select
-  #       return _.map(@_cursor.$select, (key) -> results[key]) if @_cursor.$select.length > 1
-  #       return results[@_cursor.$select[0]] if @_cursor.$select[0]
-  #   else
-  #     if @_cursor.$select
-  #       return _.map(results, (value) => _.map(@_cursor.$select, (key) -> value[key])) if @_cursor.$select.length > 1
-  #       return _.pluck(results, @_cursor.$select[0]) if @_cursor.$select[0]
-  #   return results
-
   ##############################################
   # Intervals
   ##############################################
@@ -187,6 +170,23 @@ module.exports = class Cursor
         callback(null, cursor)
       collection.find.apply(collection, args)
 
+
+  # toResponse: (results) ->
+  #   if @_cursor.$count
+  #     return 0 unless results
+  #     return results if _.isNumber(results)
+  #     return results.length if _.isArray(results)
+  #     return 1
+
+  #   if @_cursor.$limit is 1
+  #     if @_cursor.$select
+  #       return _.map(@_cursor.$select, (key) -> results[key]) if @_cursor.$select.length > 1
+  #       return results[@_cursor.$select[0]] if @_cursor.$select[0]
+  #   else
+  #     if @_cursor.$select
+  #       return _.map(results, (value) => _.map(@_cursor.$select, (key) -> value[key])) if @_cursor.$select.length > 1
+  #       return _.pluck(results, @_cursor.$select[0]) if @_cursor.$select[0]
+  #   return results
 
   # @_parseQueries: (query) ->
   #   unless _.isObject(query)

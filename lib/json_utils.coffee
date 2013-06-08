@@ -13,12 +13,9 @@ module.exports = class JSONUtils
     else if _.isString(json)
       return json
     else if _.isArray(json)
-      return _.map(json, (item) => @JSONToValue(item))
+      json[index] = @JSONToValue(value) for index, value of json
     else if _.isObject(json)
-      result = {}
-      for key, value of json
-        result[key] = @JSONToValue(value)
-      return result
+      json[key] = @JSONToValue(value) for key, value of json
     return json
 
   @valueToJSON: (value) ->
@@ -31,10 +28,7 @@ module.exports = class JSONUtils
     else if _.isString(value)
       return value
     else if _.isArray(value)
-      return _.map(value, (item) => @valueToJSON(item))
+      value[index] = @JSONToValue(item) for index, item of value
     else if _.isObject(value)
-      json = {}
-      for key, item of value
-        json[key] = @valueToJSON(item)
-      return json
+      value[key] = @valueToJSON(item) for key, item of value
     return value

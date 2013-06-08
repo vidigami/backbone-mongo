@@ -53,7 +53,7 @@ module.exports = class BackboneSync
     @_collection model, (err, collection) =>
       return options.error?(err) if err
       return options.error?(new Error("new document has a non-empty revision")) if model.get('_rev')
-      doc = @backbone_adapter.modelToDoc(model); doc._rev = 1 # start revisions
+      doc = @backbone_adapter.attributesToDoc(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
         return options.error?(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
         options.success?(@backbone_adapter.docToAttributes(docs[0]))
@@ -63,7 +63,7 @@ module.exports = class BackboneSync
 
     @_collection model, (err, collection) =>
       return options.error?(err) if err
-      json = @backbone_adapter.modelToDoc(model)
+      json = @backbone_adapter.attributesToDoc(model.toJSON())
       delete json._id if @backbone_adapter.idAttribute is '_id'
       find_query = @backbone_adapter.modelFindQuery(model)
       find_query._rev = json._rev

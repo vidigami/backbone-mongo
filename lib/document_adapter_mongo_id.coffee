@@ -14,25 +14,22 @@ module.exports = class DocumentAdapter_MongoId
     # work around for Backbone Relational
     return Store.findOrCreate(model_type, (new model_type()).parse(@docToAttributes(doc)))
 
-  @modelToDoc: (model) ->
-    return @attributesToDoc(model.toJSON())
-
   @docToAttributes: (doc) ->
     return {} unless doc
-    attributes = {}
     for key, value of doc
       if key is '_id'
-        attributes.id = doc._id.toString()
+        doc.id = doc['_id'].toString()
+        delete doc._id
       else
-        attributes[key] = json_utils.JSONToValue(value)
-    return attributes
+        doc[key] = json_utils.JSONToValue(value)
+    return doc
 
   @attributesToDoc: (attributes) ->
     return {} unless attributes
-    doc = {}
     for key, value of attributes
       if key is 'id'
-        doc._id = new ObjectID("#{value}")
+        attributes['_id'] = new ObjectID("#{value}")
+        delete attributes.id
       else
-        doc[key] = json_utils.valueToJSON(value)
-    return doc
+        attributes[key] = json_utils.valueToJSON(value)
+    return attributes
