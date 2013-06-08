@@ -1,7 +1,6 @@
 assert = require 'assert'
 Queue = require 'queue-async'
 
-Backbone = require 'backbone'
 Album = require '../models/album'
 AlbumsFabricator = require '../fabricators/albums'
 ALBUM_COUNT = 20
