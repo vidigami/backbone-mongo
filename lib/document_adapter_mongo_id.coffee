@@ -1,5 +1,5 @@
 ObjectID =  require('mongodb').ObjectID
-json_utils = require './json_utils'
+JSONUtils = require './json_utils'
 Store = require './store'
 
 module.exports = class DocumentAdapter_MongoId
@@ -21,7 +21,7 @@ module.exports = class DocumentAdapter_MongoId
         doc.id = doc['_id'].toString()
         delete doc._id
       else
-        doc[key] = json_utils.JSONToValue(value)
+        doc[key] = JSONUtils.JSONToValue(value)
     return doc
 
   @attributesToDoc: (attributes) ->
@@ -31,5 +31,5 @@ module.exports = class DocumentAdapter_MongoId
         attributes['_id'] = new ObjectID("#{value}")
         delete attributes.id
       else
-        attributes[key] = json_utils.valueToJSON(value)
+        attributes[key] = JSONUtils.valueToJSON(value)
     return attributes

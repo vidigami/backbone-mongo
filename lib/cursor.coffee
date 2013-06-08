@@ -1,5 +1,6 @@
 util = require 'util'
 _ = require 'underscore'
+JSONUtils = require './json_utils'
 
 module.exports = class Cursor
   constructor: (@backbone_sync, query) ->
@@ -100,7 +101,7 @@ module.exports = class Cursor
     find = {}
     for key, value of raw_query
       if key[0] isnt '$'
-        find[key] = @_parseValue(value)
+        find[key] = JSONUtils.JSONToValue(value)
       else if key is '$ids'
         ids = @_parseArray(value)
         if ids
@@ -124,23 +125,14 @@ module.exports = class Cursor
             cursor[key] = @_parseArray(value)
             console.log("Failed to parse $select: #{value}") unless cursor.$select
           else
-            cursor[key] = @_parseValue(value)
+            cursor[key] = JSONUtils.JSONToValue(value)
             cursor[key] = [cursor[key]] unless _.isArray(cursor[key])
 
         # parse even if you don't recognize it so others can use it
         else
-          cursor[key] = @_parseValue(value)
+          cursor[key] = JSONUtils.JSONToValue(value)
 
     return cursor
-
-  _parseValue: (value) ->
-    if _.isString(value) and value.length and value[value.length-1] is 'Z'
-      date = moment(value)
-      return date.toDate() if date and date.isValid()
-    try (value = JSON.parse(value)) catch e
-    if _.isObject(value)
-      value[key] = @_parseValue(value[key]) for key of value
-    return value
 
   _parseArray: (value) ->
     try (array = JSON.parse(value)) catch e
