@@ -9,13 +9,13 @@ adapters = Helpers.adapters
 class IndexedModel extends Backbone.Model
   @schema:
     _id: [indexed: true]
-  url: "#{require('../config/test_database')['test']}/indexed_models"
+  url: "#{require('../config/database')['test']}/indexed_models"
   sync: require('../../backbone_sync')(IndexedModel)
 
 class CustomIndexModel extends Backbone.Model
   @schema:
     id: [indexed: true, manual_id: true]
-  url: "#{require('../config/test_database')['test']}/indexed_models"
+  url: "#{require('../config/database')['test']}/indexed_models"
   sync: require('../../backbone_sync')(CustomIndexModel)
 
 
@@ -74,4 +74,3 @@ describe 'ID Functionality', ->
         catch err
           assert.ok(err, 'Expecting throw if missing id')
           done()
-

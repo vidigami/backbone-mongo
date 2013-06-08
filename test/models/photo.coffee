@@ -8,5 +8,5 @@ class Photo extends Backbone.Model
     }
 
 module.exports = class ServerPhoto extends Photo
-  url: require('../config/databases/photos')['test']
+  url: "#{require('../config/database')['test']}/photos"
   sync: require('../../backbone_sync')(ServerPhoto)
