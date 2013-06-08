@@ -6,10 +6,7 @@ Backbone = require 'backbone'
 Helpers = require '../lib/helpers'
 adapters = Helpers.adapters
 
-class Thing extends Backbone.Model
-  @schema: {id: [indexed: true]}
-  sync: require('../../backbone_sync')(Thing)
-  url: require('../config/databases/things')['test']
+Photo = require '../models/photo'
 
 describe 'BackboneSync', ->
 

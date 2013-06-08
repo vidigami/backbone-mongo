@@ -20,8 +20,8 @@ module.exports = class BackboneSync
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
     throw new Error("Missing url for model") unless url = _.result((new @model_type()), 'url')
-    schema = _.result(@model_type, 'schema') or {}
-    @connection = new Connection(url, schema)
+    @schema = _.result(@model_type, 'schema') or {}
+    @connection = new Connection(url, @schema)
 
   initialize: (model) ->
     # TODO: add relations

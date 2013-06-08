@@ -36,9 +36,9 @@ module.exports = class Connection
     if url_parts.auth
       auth_parts = url_parts.auth.split(':')
       config.user = auth_parts[0]
-      config.password = auth_parts[1]
+      config.password = if auth_parts.length > 1 then auth_parts[1] else null
 
-    database_parts = url_parts.path.split('/')
+    database_parts = url_parts.pathname.split('/')
     database = database_parts[1]
     table = database_parts[2]
 

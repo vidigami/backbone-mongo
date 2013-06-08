@@ -4,7 +4,7 @@ Queue = require 'queue-async'
 Album = require '../models/album'
 
 adapters =
-  bbCallback: (callback) -> return {success: ((model) -> callback(null, model)), error: (-> callback(new Error("failed")))}
+  bbCallback: (callback) -> return {success: ((model) -> callback(null, model)), error: ((err)-> callback(err or new Error('Backbone operation failed')))}
 
 module.exports = class AlbumsFabricator
   @create: (count, callback) ->
