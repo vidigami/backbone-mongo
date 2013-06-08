@@ -16,12 +16,15 @@ CLASS_METHODS = [
 module.exports = class MongoBackboneSync
 
   constructor: (@model_type) ->
-    @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS # publish methods on the model class
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
     throw new Error("Missing url for model") unless url = _.result((new @model_type()), 'url')
     @schema = _.result(@model_type, 'schema') or {}
     @connection = new Connection(url, @schema)
+
+    # publish methods and sync on model
+    @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS
+    @model_type._sync = @
 
   initialize: (model) ->
     # TODO: add relations
