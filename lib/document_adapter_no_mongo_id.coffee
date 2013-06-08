@@ -1,5 +1,5 @@
-json_utils = require './json_utils'
-Store = require './store'
+JSONUtils = require 'backbone-node/json_utils'
+BackboneRelationalUtils = require 'backbone-node/lib/backbone_relational_utils'
 
 module.exports = class DocumentAdapter_NoMongoId
 
@@ -7,27 +7,20 @@ module.exports = class DocumentAdapter_NoMongoId
 
   @modelFindQuery: (model) -> return {id: model.get('id')}
 
-  @docToModel: (doc, model_type) ->
+  @nativeToModel: (doc, model_type) ->
     return null unless doc
 
     # work around for Backbone Relational
-    return Store.findOrCreate(model_type, (new model_type()).parse(@docToAttributes(doc)))
+    return BackboneRelationalUtils.findOrCreate(model_type, model_type::parse(@nativeToAttributes(doc)))
 
-  @modelToDoc: (model) ->
-    return @attributesToDoc(model.toJSON())
-
-  @docToAttributes: (doc) ->
+  @nativeToAttributes: (doc) ->
     return {} unless doc
-    attributes = {}
-    for key, value of doc
-      attributes[key] = json_utils.JSONToValue(value)
-    delete attributes._id
-    return attributes
-
-  @attributesToDoc: (attributes) ->
-    return {} unless attributes
-    doc = {}
-    for key, value of attributes
-      doc[key] = json_utils.valueToJSON(value)
+    doc[key] = JSONUtils.JSONToValue(value) for key, value of doc
     delete doc._id
     return doc
+
+  @attributesToNative: (attributes) ->
+    return {} unless attributes
+    attributes[key] = JSONUtils.valueToJSON(value) for key, value of attributes
+    delete attributes._id
+    return attributes

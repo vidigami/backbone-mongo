@@ -8,7 +8,7 @@ Install
 
 Install all npm modules:
 
-  $ cd mongo-backbone
+  $ cd backbone-mongo
   $ npm install
 
 Test

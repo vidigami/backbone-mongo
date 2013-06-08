@@ -1,8 +1,8 @@
+util = require 'util'
+URL = require 'url'
 _ = require 'underscore'
 Queue = require 'queue-async'
 mongodb = require 'mongodb'
-util = require 'util'
-URL = require 'url'
 
 # two minutes
 RETRY_COUNT = 120
@@ -26,29 +26,31 @@ connectionRetry = (retry_count, name, fn, callback) ->
 
 module.exports = class Connection
 
-  constructor: (config, collection_name, options = {}) ->
+  constructor: (@url, @schema={}) ->
     @collection_requests = []
+    throw new Error "Expecting a string url" unless _.isString(@url)
+    url_parts = URL.parse(@url)
+    config =
+      host: url_parts.hostname
+      port: url_parts.port
+    if url_parts.auth
+      auth_parts = url_parts.auth.split(':')
+      config.user = auth_parts[0]
+      config.password = if auth_parts.length > 1 then auth_parts[1] else null
 
-    if _.isString(config)
-      url_parts = URL.parse(config)
-      config =
-        host: url_parts.hostname
-        port: url_parts.port
-        database: url_parts.path.split('/')[1]
-      if url_parts.auth
-        auth_parts = url_parts.auth.split(':')
-        config.user = auth_parts[0]
-        config.password = auth_parts[1]
+    database_parts = url_parts.pathname.split('/')
+    database = database_parts[1]
+    table = database_parts[2]
 
-    console.log "MongoDB for '#{collection_name}' is: '#{config.host}:#{config.port}/#{config.database}'"
-    @client = new mongodb.Db(config.database, new mongodb.Server(config.host, config.port, {}), {safe: true})
+    console.log "MongoDB for '#{table}' is: '#{config.host}:#{config.port}/#{database}'"
+    @client = new mongodb.Db(database, new mongodb.Server(config.host, config.port, {}), {safe: true})
 
     queue = Queue(1)
     queue.defer (callback) =>
       doOpen = (callback) => @client.open callback
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB client open: #{collection_name}", doOpen, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB client open: #{table}", doOpen, callback)
 
     queue.defer (callback) =>
       if config.user
@@ -59,14 +61,19 @@ module.exports = class Connection
     queue.defer (callback) =>
 
       doConnectToCollection = (callback) =>
-        @client.collection collection_name, (err, collection) =>
+        @client.collection table, (err, collection) =>
           return callback(err) if err
 
-          if options.indices
-            console.log("Trying to ensureIndex #{util.inspect(options.indices)} on #{collection_name}")
-            collection.ensureIndex options.indices, {background: true}, (err) =>
-              return new Error("Failed to ensureIndex #{util.inspect(options.indices)} on #{collection_name}. Reason: #{err}") if err
-              console.log("Successfully ensureIndex #{util.inspect(options.indices)} on #{collection_name}")
+          for field_name, field_info of @schema
+            continue unless _.isArray(field_info)
+            for info in field_info
+              continue unless info.indexed
+              do (field_name) ->
+                index_info = {}; index_info[field_name] = 1
+                collection.ensureIndex index_info, {background: true}, (err) =>
+                  return new Error("MongoBackbone: Failed to indexed '#{field_name}' on #{table}. Reason: #{err}") if err
+                  console.log("MongoBackbone: Successfully indexed '#{field_name}' on #{table}")
+              break
 
           # deal with waiting requests
           collection_requests = _.clone(@collection_requests); @collection_requests = []
@@ -75,13 +82,12 @@ module.exports = class Connection
           callback()
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{collection_name}", doConnectToCollection, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{table}", doConnectToCollection, callback)
 
     queue.await (err) =>
       if err
         @failed_connection = true
-        collection_requests = _.clone(@collection_requests)
-        @collection_requests = []
+        collection_requests = _.clone(@collection_requests); @collection_requests = []
         request(new Error("Connection failed")) for request in collection_requests
 
   collection: (callback) ->
