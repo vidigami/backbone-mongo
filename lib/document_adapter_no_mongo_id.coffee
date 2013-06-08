@@ -25,6 +25,5 @@ module.exports = class DocumentAdapter_NoMongoId
   @attributesToNative: (attributes) ->
     return {} unless attributes
     attributes[key] = JSONUtils.valueToJSON(value) for key, value of attributes
-    throw new Error "Model is missing id on #{util.inspect(attributes)}. Please assign when creating." unless attributes.id
     delete attributes._id
     return attributes
