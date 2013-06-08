@@ -33,7 +33,7 @@ module.exports = class MongoCursor extends Cursor
           cursor = cursor.limit(@_cursor.$limit)
 
         # only the count
-        return callback(null, cursor.count(callback)) if count or @_cursor.$count
+        return cursor.count(callback) if count or @_cursor.$count
 
         cursor.toArray (err, docs) =>
           return callback(err) if err
