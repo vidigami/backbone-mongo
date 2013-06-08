@@ -40,12 +40,12 @@ module.exports = class Cursor
       return callback(err) if err
       return cursor.count(callback) if @_cursor.$count
 
-      # TODO: make the database query for specific attributes for values and select
       cursor.toArray (err, docs) =>
         return callback(err) if err
         return callback(null, if docs.length then @backbone_adapter.docToAttributes(docs[0]) else null) if @_cursor.$first
         json = _.map(docs, (doc) => @backbone_adapter.docToAttributes(doc))
 
+        # TODO: OPTIMIZE TO REMOVE 'id' and '_rev' if needed
         if @_cursor.$values
           $values = if @_cursor.$white_list then _.intersection(@_cursor.$values, @_cursor.$white_list) else @_cursor.$values
           json = (((item[key] for key in $values when item.hasOwnProperty(key))) for item in json)
@@ -167,12 +167,25 @@ module.exports = class Cursor
     # build the cursor
     @backbone_sync._collection (err, collection) =>
       return callback(err) if err
-      collection.find @backbone_adapter.attributesToDoc(@_find), (err, cursor) =>
+      args = [@backbone_adapter.attributesToDoc(@_find)]
+
+      # only select specific fields
+      if @_cursor.$values
+        $fields = if @_cursor.$white_list then _.intersection(@_cursor.$values, @_cursor.$white_list) else @_cursor.$values
+      else if @_cursor.$select
+        $fields = if @_cursor.$white_list then _.intersection(@_cursor.$select, @_cursor.$white_list) else @_cursor.$select
+      else if @_cursor.$white_list
+        $fields = @_cursor.$white_list
+      args.push($fields) if $fields
+
+      # add callback and call
+      args.push (err, cursor) =>
         return callback(err) if err
         cursor = cursor.sort(@_cursor.$sort) if @_cursor.$sort
         cursor = cursor.skip(@_cursor.$offset) if @_cursor.$offset
         cursor = cursor.limit(@_cursor.$limit) if @_cursor.$limit
         callback(null, cursor)
+      collection.find.apply(collection, args)
 
 
   # @_parseQueries: (query) ->
