@@ -13,7 +13,7 @@ CLASS_METHODS = [
   'findOneNearDate'
 ]
 
-module.exports = class BackboneSync
+module.exports = class MongoBackboneSync
 
   constructor: (@model_type) ->
     @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS # publish methods on the model class
@@ -33,30 +33,30 @@ module.exports = class BackboneSync
     # a collection
     if model.models
       @cursor().toJSON (err, json) ->
-        return options.error?(err) if err
+        return options.error(err) if err
         options.success?(json)
 
     # a model
     else
       @cursor(@backbone_adapter.modelFindQuery(model)).limit(1).toJSON (err, json) ->
-        return options.error?(err) if err
-        return options.error?(new Error "Model not found. Id #{model.get('id')}") if json.length isnt 1
+        return options.error(err) if err
+        return options.error(new Error "Model not found. Id #{model.get('id')}") if json.length isnt 1
         options.success?(json)
 
   create: (model, options) ->
     @connection.collection (err, collection) =>
-      return options.error?(err) if err
-      return options.error?(new Error("new document has a non-empty revision")) if model.get('_rev')
+      return options.error(err) if err
+      return options.error(new Error("new document has a non-empty revision")) if model.get('_rev')
       doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
-        return options.error?(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
+        return options.error(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
         options.success?(@backbone_adapter.nativeToAttributes(docs[0]))
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
 
     @connection.collection (err, collection) =>
-      return options.error?(err) if err
+      return options.error(err) if err
       json = @backbone_adapter.attributesToNative(model.toJSON())
       delete json._id if @backbone_adapter.idAttribute is '_id'
       find_query = @backbone_adapter.modelFindQuery(model)
@@ -65,8 +65,8 @@ module.exports = class BackboneSync
 
       # update the record
       collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$set: json}, {new: true}, (err, doc) =>
-        return options.error?(new Error("Failed to update model. #{err}")) if err or not doc
-        return options.error?(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
+        return options.error(new Error("Failed to update model. #{err}")) if err or not doc
+        return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
 
         # look for removed attributes that need to be deleted
         expected_keys = _.keys(json); expected_keys.push('_id'); saved_keys = _.keys(doc)
@@ -79,13 +79,13 @@ module.exports = class BackboneSync
         keys = {}
         keys[key] = '' for key in keys_to_delete
         collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$unset: keys, $set: {_rev: json._rev}}, {new: true}, (err, doc) =>
-          return options.error?(new Error("Failed to update model. #{err}")) if err or not doc
-          return options.error?(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
+          return options.error(new Error("Failed to update model. #{err}")) if err or not doc
+          return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
           options.success?(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
     @destroy @backbone_adapter.modelFindQuery(model), (err) ->
-      return options.error?(model, err, options) if err
+      return options.error(model, err, options) if err
       options.success?(model, {}, options)
 
   ###################################
@@ -171,5 +171,5 @@ module.exports = class BackboneSync
 # options
 #   model_type - the model that will be used to add query functions to
 module.exports = (model_type) ->
-  sync = new BackboneSync(model_type)
+  sync = new MongoBackboneSync(model_type)
   return (method, model, options={}) -> sync[method](model, options)

@@ -11,7 +11,7 @@ module.exports = class DocumentAdapter_NoMongoId
     return null unless doc
 
     # work around for Backbone Relational
-    return BackboneRelational.findOrCreate(model_type, (new model_type()).parse(@nativeToAttributes(doc)))
+    return BackboneRelational.findOrCreate(model_type, model_type::parse(@nativeToAttributes(doc)))
 
   @nativeToAttributes: (doc) ->
     return {} unless doc

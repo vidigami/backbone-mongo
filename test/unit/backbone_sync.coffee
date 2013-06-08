@@ -6,7 +6,7 @@ Backbone = require 'backbone'
 Helpers = require '../lib/helpers'
 adapters = Helpers.adapters
 
-Photo = require '../models/photo'
+Album = require '../models/album'
 
 describe 'BackboneSync', ->
 

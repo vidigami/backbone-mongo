@@ -73,7 +73,7 @@ describe 'Model.find', ->
 
 
   it 'Handles a select fields query', (done) ->
-    FIELD_NAMES = ['id', 'name', 'description']
+    FIELD_NAMES = ['id', 'name', 'nothing']
     Album.find {$select: FIELD_NAMES}, (err, models) ->
       assert.ok(!err, 'no errors')
       assert.ok(models, 'gets models')
