@@ -158,7 +158,10 @@ module.exports = class Cursor
         return callback(err) if err
         cursor = cursor.sort(@_cursor.$sort) if @_cursor.$sort
         cursor = cursor.skip(@_cursor.$offset) if @_cursor.$offset
-        cursor = cursor.limit(@_cursor.$limit) if @_cursor.$limit
+        if @_cursor.$one
+          cursor = cursor.limit(1)
+        else if @_cursor.$limit
+          cursor = cursor.limit(@_cursor.$limit)
         callback(null, cursor)
       collection.find.apply(collection, args)
 
