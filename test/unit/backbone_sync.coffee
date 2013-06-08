@@ -1,16 +1,15 @@
 assert = require 'assert'
-
 Queue = require 'queue-async'
 
 Backbone = require 'backbone'
+
+Helpers = require '../lib/helpers'
+adapters = Helpers.adapters
 
 class Thing extends Backbone.Model
   @schema: {id: [indexed: true]}
   sync: require('../../backbone_sync')(Thing)
   url: require('../config/databases/things')['test']
-
-adapters =
-  bbCallback: (callback) -> return {success: ((model) -> callback(null, model)), error: (-> callback(new Error('failed')))}
 
 describe 'BackboneSync', ->
 

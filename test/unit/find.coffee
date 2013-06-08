@@ -1,28 +1,15 @@
 util = require 'util'
 assert = require 'assert'
 _ = require 'underscore'
-Backbone = require 'backbone'
 Queue = require 'queue-async'
 
+Backbone = require 'backbone'
 Album = require '../models/album'
 AlbumsFabricator = require '../fabricators/albums'
 ALBUM_COUNT = 20
 
-adapters =
-  bbCallback: (callback) -> return {success: ((model) -> callback(null, model)), error: (-> callback(new Error("failed")))}
-
-getAt = (model_type, index, callback) ->
-  model_type.cursor().offset(index).limit(1).toModels (err, models) ->
-    return callback(err) if err
-    return callback(null, if (models.length is 1) then models[0] else null)
-
-setAllNames = (model_type, name, callback) ->
-  model_type.all (err, all_models) ->
-    return callback(err) if err
-    queue = new Queue()
-    for album in all_models
-      do (album) -> queue.defer (callback) -> album.save {name: name}, adapters.bbCallback callback
-    queue.await callback
+Helpers = require '../lib/helpers'
+adapters = Helpers.adapters
 
 describe 'Model.find', ->
 
@@ -39,7 +26,7 @@ describe 'Model.find', ->
       done()
 
   it 'Handles a find id query', (done) ->
-    getAt Album, 0, (err, test_model) ->
+    Helpers.getAt Album, 0, (err, test_model) ->
       assert.ok(!err, 'no errors')
       assert.ok(test_model, 'found model')
       Album.find test_model.get('id'), (err, model) ->
@@ -50,7 +37,7 @@ describe 'Model.find', ->
 
 
   it 'Handles another find id query', (done) ->
-    getAt Album, 1, (err, test_model) ->
+    Helpers.getAt Album, 1, (err, test_model) ->
       assert.ok(!err, 'no errors')
       assert.ok(test_model, 'found model')
 
@@ -62,7 +49,7 @@ describe 'Model.find', ->
 
 
   it 'Handles a find by query id', (done) ->
-    getAt Album, 0, (err, test_model) ->
+    Helpers.getAt Album, 0, (err, test_model) ->
       assert.ok(!err, 'no errors')
       assert.ok(test_model, 'found model')
 
@@ -74,7 +61,7 @@ describe 'Model.find', ->
 
 
   it 'Handles a name find query', (done) ->
-    getAt Album, 1, (err, test_model) ->
+    Helpers.getAt Album, 1, (err, test_model) ->
       assert.ok(!err, 'no errors')
       assert.ok(test_model, 'found model')
 
