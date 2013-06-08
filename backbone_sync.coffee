@@ -19,18 +19,7 @@ module.exports = class BackboneSync
 
     # publish methods on the model class
     @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS
-
-    # configure the adapter for converting between types and ids
-    schema = _.result(@model_type, 'schema') or {}
-    for field_name, field_info of schema
-      continue if (field_name isnt 'id') or not _.isArray(field_info)
-      for info in field_info
-        if info.manual_id
-          @backbone_adapter = require './lib/document_adapter_no_mongo_id'
-          break
-      break
-    @backbone_adapter = require './lib/document_adapter_mongo_id' if not @backbone_adapter # default is using the mongodb adapter
-    @model_type.backbone_adapter = @backbone_adapter
+    @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
   initialize: (model) ->
     return if @connection
@@ -180,6 +169,14 @@ module.exports = class BackboneSync
     (callback = model; model = null) if arguments.length is 1
     @initialize(model) unless @connection
     @connection.collection(callback)
+
+  _selectAdapter: ->
+    schema = _.result(@model_type, 'schema') or {}
+    for field_name, field_info of schema
+      continue if (field_name isnt 'id') or not _.isArray(field_info)
+      for info in field_info
+        return require './lib/document_adapter_no_mongo_id' if info.manual_id
+    return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
 
 # options
 #   model_type - the model that will be used to add query functions to
