@@ -1,13 +1,11 @@
 _ = require 'underscore'
 Queue = require 'queue-async'
 
-testGenerator = require 'backbone-rest/test/lib/test_generator'
-
 Album = require '../models/album'
 AlbumsFabricator = require '../fabricators/albums'
 ALBUM_COUNT = 20
 
-testGenerator {
+test_parameters =
   model_type: Album
   route: 'albums'
   beforeEach: (callback) ->
@@ -19,4 +17,6 @@ testGenerator {
       Album.all (err, albums) ->
         return callback(err) if err
         callback(null, _.map(albums, (test)-> test.toJSON()))
-}
+
+require('backbone-node/lib/test_generators/server_model')(test_parameters)
+require('backbone-rest/lib/test_generators/backbone_rest')(test_parameters)

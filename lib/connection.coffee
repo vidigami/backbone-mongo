@@ -1,8 +1,8 @@
+util = require 'util'
+URL = require 'url'
 _ = require 'underscore'
 Queue = require 'queue-async'
 mongodb = require 'mongodb'
-util = require 'util'
-URL = require 'url'
 
 # two minutes
 RETRY_COUNT = 120

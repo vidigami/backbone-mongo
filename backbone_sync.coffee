@@ -91,7 +91,7 @@ module.exports = class MongoBackboneSync
   ###################################
   # Collection Extensions
   ###################################
-  cursor: (query={}) -> return new MongoCursor(@, query)
+  cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
   find: (query, callback) ->
     [query, callback] = [{}, query] if arguments.length is 1

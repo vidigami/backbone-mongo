@@ -1,5 +1,1 @@
-# require './unit/backbone_sync'
-# require './unit/find'
-# require './unit/cursor'
-# require './unit/convenience'
-require './unit/backbone_rest'
+require './unit/signature_compliance'
