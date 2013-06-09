@@ -12,11 +12,11 @@ class IndexedModel extends Backbone.Model
   url: "#{require('../config/database')['test']}/indexed_models"
   sync: require('../../backbone_sync')(IndexedModel)
 
-class CustomIndexModel extends Backbone.Model
+class ManualIdModel extends Backbone.Model
   @schema:
     id: [indexed: true, manual_id: true]
   url: "#{require('../config/database')['test']}/indexed_models"
-  sync: require('../../backbone_sync')(CustomIndexModel)
+  sync: require('../../backbone_sync')(ManualIdModel)
 
 
 describe 'ID Functionality', ->
@@ -46,31 +46,21 @@ describe 'ID Functionality', ->
 
   describe 'manual_id', ->
     it 'should fail to save if you do not provide an id', (done) ->
-      model = new CustomIndexModel({name: 'Bob'})
-
-      try
-        model.save {}, adapters.bbCallback (err) ->
-          assert.ok(false, 'Failed to throw for missing id when using a manual id')
-          done()
-      catch err
-        assert.ok(err, 'Expecting throw if missing id')
+      model = new ManualIdModel({name: 'Bob'})
+      model.save {}, adapters.bbCallback (err) ->
+        assert.ok(err, 'should not save if missing an id')
         done()
 
     it 'should save if provide an id', (done) ->
-      model = new CustomIndexModel({id: _.uniqueId(), name: 'Bob'})
+      model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
       model.save {}, adapters.bbCallback (err) ->
         assert.ok(!err, 'no errors')
         done()
 
     it 'should fail to save if you delete the id after saving', (done) ->
-      model = new CustomIndexModel({id: _.uniqueId(), name: 'Bob'})
-
+      model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
       model.save {}, adapters.bbCallback (err) ->
         assert.ok(!err, 'no errors')
-        try
-          model.save {id: null}, adapters.bbCallback (err) ->
-            assert.ok(false, 'Failed to throw for missing id when using a manual id')
-            done()
-        catch err
-          assert.ok(err, 'Expecting throw if missing id')
+        model.save {id: null}, adapters.bbCallback (err) ->
+          assert.ok(err, 'should not save if missing an id')
           done()

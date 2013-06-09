@@ -18,7 +18,7 @@ module.exports = class MongoBackboneSync
   constructor: (@model_type) ->
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
-    throw new Error("Missing url for model") unless url = _.result((new @model_type()), 'url')
+    throw new Error 'Missing url for model' unless url = _.result((new @model_type()), 'url')
     @schema = _.result(@model_type, 'schema') or {}
     @connection = new Connection(url, @schema)
 
@@ -47,9 +47,11 @@ module.exports = class MongoBackboneSync
         options.success?(json)
 
   create: (model, options) ->
+    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.get('id')
+
     @connection.collection (err, collection) =>
       return options.error(err) if err
-      return options.error(new Error("new document has a non-empty revision")) if model.get('_rev')
+      return options.error(new Error('new document has a non-empty revision')) if model.get('_rev')
       doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
         return options.error(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
@@ -57,6 +59,7 @@ module.exports = class MongoBackboneSync
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
+    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.get('id')
 
     @connection.collection (err, collection) =>
       return options.error(err) if err
@@ -168,7 +171,9 @@ module.exports = class MongoBackboneSync
     for field_name, field_info of schema
       continue if (field_name isnt 'id') or not _.isArray(field_info)
       for info in field_info
-        return require './lib/document_adapter_no_mongo_id' if info.manual_id
+        if info.manual_id
+          @manual_id = true
+          return require './lib/document_adapter_no_mongo_id'
     return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
 
 # options

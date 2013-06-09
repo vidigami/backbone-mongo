@@ -28,7 +28,7 @@ module.exports = class Connection
 
   constructor: (@url, @schema={}) ->
     @collection_requests = []
-    throw new Error "Expecting a string url" unless _.isString(@url)
+    throw new Error 'Expecting a string url' unless _.isString(@url)
     url_parts = URL.parse(@url)
     config =
       host: url_parts.hostname
