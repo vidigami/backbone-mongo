@@ -11,7 +11,7 @@ test_parameters =
   beforeEach: (callback) ->
     queue = new Queue(1)
     queue.defer (callback) -> Album.destroy {}, callback
-    queue.defer (callback) -> Fabricator.create(Album, 10, {name: Fabricator.uniqueId('album_')}, callback)
+    queue.defer (callback) -> Fabricator.create(Album, 10, {name: Fabricator.uniqueId('album_'), created_at: Fabricator.dateString, updated_at: Fabricator.dateString}, callback)
     queue.await (err) -> callback(null, _.map(_.toArray(arguments).pop(), (test) -> test.attributes))
 
 require('backbone-node/lib/test_generators/server_model')(test_parameters)
