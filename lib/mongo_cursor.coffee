@@ -25,7 +25,17 @@ module.exports = class MongoCursor extends Cursor
       # add callback and call
       args.push (err, cursor) =>
         return callback(err) if err
-        cursor = cursor.sort(@_cursor.$sort) if @_cursor.$sort
+        if @_cursor.$sort
+          @_cursor.$sort = [@_cursor.$sort] unless _.isArray(@_cursor.$sort)
+          sorters = {}
+          for sort_part in @_cursor.$sort
+            sort_part = sort_part.trim()
+            if sort_part[0] is '-'
+              key = sort_part.substring(1, sort_part.length).trim()
+              sorters[key] = -1
+            else
+              sorters[sort_part] = 1
+          cursor = cursor.sort(sorters)
         cursor = cursor.skip(@_cursor.$offset) if @_cursor.$offset
         if @_cursor.$one
           cursor = cursor.limit(1)
