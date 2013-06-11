@@ -2,7 +2,7 @@ util = require 'util'
 _ = require 'underscore'
 Queue = require 'queue-async'
 
-JSONUtils = require 'backbone-node/json_utils'
+JSONUtils = require 'backbone-node/lib/json_utils'
 Fabricator = require 'backbone-node/fabricator'
 Album = require '../models/album'
 

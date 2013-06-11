@@ -1,6 +1,6 @@
 util = require 'util'
 
-JSONUtils = require 'backbone-node/json_utils'
+JSONUtils = require 'backbone-node/lib/json_utils'
 BackboneRelationalUtils = require 'backbone-node/lib/backbone_relational_utils'
 
 module.exports = class DocumentAdapter_NoMongoId
