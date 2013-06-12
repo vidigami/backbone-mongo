@@ -20,4 +20,4 @@ test_parameters =
     queue.await (err) -> callback(null, _.map(_.toArray(arguments).pop(), (test) -> JSONUtils.valueToJSON(test.toJSON())))
 
 require('backbone-node/lib/test_generators/all')(test_parameters)
-require('backbone-rest/lib/test_generators/backbone_rest')(test_parameters)
+require('backbone-rest/lib/test_generators/all')(test_parameters)
