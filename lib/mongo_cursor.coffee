@@ -3,6 +3,18 @@ _ = require 'underscore'
 
 Cursor = require 'backbone-node/lib/cursor'
 
+_sortArgsToMongo = (args) ->
+  args = if _.isArray(args) then args else [args]
+  sorters = {}
+  for sort_part in args
+    sort_part = sort_part.trim()
+    if sort_part[0] is '-'
+      key = sort_part.substring(1).trim()
+      sorters[key] = -1
+    else
+      sorters[sort_part] = 1
+  return sorters
+
 module.exports = class MongoCursor extends Cursor
   ##############################################
   # Execution of the Query
@@ -25,18 +37,13 @@ module.exports = class MongoCursor extends Cursor
       # add callback and call
       args.push (err, cursor) =>
         return callback(err) if err
+
         if @_cursor.$sort
           @_cursor.$sort = [@_cursor.$sort] unless _.isArray(@_cursor.$sort)
-          sorters = {}
-          for sort_part in @_cursor.$sort
-            sort_part = sort_part.trim()
-            if sort_part[0] is '-'
-              key = sort_part.substring(1, sort_part.length).trim()
-              sorters[key] = -1
-            else
-              sorters[sort_part] = 1
-          cursor = cursor.sort(sorters)
+          cursor = cursor.sort(_sortArgsToMongo(@_cursor.$sort))
+
         cursor = cursor.skip(@_cursor.$offset) if @_cursor.$offset
+
         if @_cursor.$one
           cursor = cursor.limit(1)
         else if @_cursor.$limit
