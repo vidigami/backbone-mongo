@@ -64,7 +64,17 @@ module.exports = class MongoCursor extends Cursor
 
           else if @_cursor.$white_list
             json = _.map(json, (item) => _.pick(item, @_cursor.$white_list))
-          callback(null, json)
+
+          if @_cursor.$page
+            cursor.count (err, count) =>
+              return callback(err) if err
+              json =
+                offset: @_cursor.$offset
+                total_rows: count
+                rows: json
+              callback(null, json)
+          else
+            callback(null, json)
 
       collection.find.apply(collection, args)
 
