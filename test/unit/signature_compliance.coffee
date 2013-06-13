@@ -11,7 +11,7 @@ test_parameters =
   route: 'albums'
   beforeEach: (callback) ->
     queue = new Queue(1)
-    queue.defer (callback) -> Album.destroy {}, callback
+    queue.defer (callback) -> Album.destroy callback
     queue.defer (callback) -> Fabricator.create(Album, 10, {
       name: Fabricator.uniqueId('album_')
       created_at: Fabricator.date
