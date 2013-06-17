@@ -99,6 +99,8 @@ module.exports = class MongoBackboneSync
       query = {id: query} unless _.isObject(query)
       collection.remove @backbone_adapter.attributesToNative(query), callback
 
+  relation: (key) -> @model_type._schema.relation(key)
+
   # options:
   #  @key: default 'created_at'
   #  @reverse: default false
