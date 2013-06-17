@@ -8,7 +8,7 @@ Fabricator = require 'backbone-orm/fabricator'
 
 module.exports = class Album extends Backbone.Model
   url: "#{require('../config/database')['test']}/albums"
-  sync: require('../../backbone_sync')(Album)
+  sync: require('../../backbone_sync')(Album, true)
 
 test_parameters =
   model_type: Album
