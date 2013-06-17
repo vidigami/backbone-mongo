@@ -1,7 +1,7 @@
 util = require 'util'
 _ = require 'underscore'
 
-Cursor = require 'backbone-node/lib/cursor'
+Cursor = require 'backbone-orm/lib/cursor'
 
 _sortArgsToMongo = (args) ->
   args = if _.isArray(args) then args else [args]

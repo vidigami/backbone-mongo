@@ -3,7 +3,7 @@ assert = require 'assert'
 _ = require 'underscore'
 Backbone = require 'backbone'
 
-Helpers = require 'backbone-node/utils'
+Helpers = require 'backbone-orm/utils'
 adapters = Helpers.adapters
 
 class IndexedModel extends Backbone.Model

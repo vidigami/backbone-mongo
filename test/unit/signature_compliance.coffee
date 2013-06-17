@@ -2,8 +2,8 @@ util = require 'util'
 _ = require 'underscore'
 Queue = require 'queue-async'
 
-JSONUtils = require 'backbone-node/lib/json_utils'
-Fabricator = require 'backbone-node/fabricator'
+JSONUtils = require 'backbone-orm/lib/json_utils'
+Fabricator = require 'backbone-orm/fabricator'
 Album = require '../models/album'
 
 test_parameters =
@@ -19,5 +19,5 @@ test_parameters =
     }, callback)
     queue.await (err) -> callback(null, _.map(_.toArray(arguments).pop(), (test) -> JSONUtils.valueToJSON(test.toJSON())))
 
-require('backbone-node/lib/test_generators/all')(test_parameters)
+require('backbone-orm/lib/test_generators/all_flat')(test_parameters)
 require('backbone-rest/lib/test_generators/all')(test_parameters)
