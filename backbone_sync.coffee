@@ -4,30 +4,23 @@ moment = require 'moment'
 Queue = require 'queue-async'
 
 MongoCursor = require './lib/mongo_cursor'
+Schema = require 'backbone-orm/lib/schema'
 Connection = require './lib/connection'
-
-CLASS_METHODS = [
-  'initialize'
-  'cursor', 'find'
-  'count', 'all', 'destroy'
-  'findOneNearDate'
-]
 
 module.exports = class MongoBackboneSync
 
   constructor: (@model_type) ->
+    throw new Error 'Missing url for model' unless url = _.result((new @model_type()), 'url')
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
-    throw new Error 'Missing url for model' unless url = _.result((new @model_type()), 'url')
-    @schema = _.result(@model_type, 'schema') or {}
-    @connection = new Connection(url, @schema)
-
     # publish methods and sync on model
-    @model_type[fn] = _.bind(@[fn], @) for fn in CLASS_METHODS
     @model_type._sync = @
+    @model_type._schema = new Schema(@model_type)
+    @connection = new Connection(url, @model_type._schema)
 
   initialize: (model) ->
-    # TODO: add relations
+    return if @is_initialized; @is_initialized = true
+    @model_type._schema.initialize()
 
   ###################################
   # Classic Backbone Sync
@@ -176,8 +169,17 @@ module.exports = class MongoBackboneSync
           return require './lib/document_adapter_no_mongo_id'
     return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
 
-# options
-#   model_type - the model that will be used to add query functions to
-module.exports = (model_type) ->
+
+module.exports = (model_type, cache) ->
   sync = new MongoBackboneSync(model_type)
-  return (method, model, options={}) -> sync[method](model, options)
+
+  sync_fn = (method, model, options={}) ->
+    sync['initialize']()
+    sync[method](model, options)
+
+  require('backbone-orm/lib/model_extensions')(model_type, sync_fn)
+
+  if cache
+    return require('./cache_sync')(model_type, sync_fn)
+  else
+    return sync_fn
