@@ -31,10 +31,10 @@ describe 'ID Functionality', ->
       # indexing is async so need to poll
       checkIndexes = ->
         IndexedModel._sync.connection.collection (err, collection) ->
-          assert.ok(!err, 'no errors')
+          assert.ok(!err, "No errors: #{err}")
 
           collection.indexExists '_id_', (err, exists) ->
-            assert.ok(!err, 'no errors')
+            assert.ok(!err, "No errors: #{err}")
             return done() if exists
             _.delay checkIndexes, 50
 
@@ -54,13 +54,13 @@ describe 'ID Functionality', ->
     it 'should save if provide an id', (done) ->
       model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
       model.save {}, adapters.bbCallback (err) ->
-        assert.ok(!err, 'no errors')
+        assert.ok(!err, "No errors: #{err}")
         done()
 
     it 'should fail to save if you delete the id after saving', (done) ->
       model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
       model.save {}, adapters.bbCallback (err) ->
-        assert.ok(!err, 'no errors')
+        assert.ok(!err, "No errors: #{err}")
         model.save {id: null}, adapters.bbCallback (err) ->
           assert.ok(err, 'should not save if missing an id')
           done()

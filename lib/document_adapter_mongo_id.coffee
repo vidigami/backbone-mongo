@@ -1,3 +1,4 @@
+util =  require 'util'
 ObjectID =  require('mongodb').ObjectID
 JSONUtils = require 'backbone-orm/lib/json_utils'
 

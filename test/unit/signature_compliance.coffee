@@ -19,5 +19,5 @@ test_parameters =
     }, callback)
     queue.await (err) -> callback(null, _.map(_.toArray(arguments).pop(), (test) -> JSONUtils.valueToJSON(test.toJSON())))
 
-require('backbone-orm/lib/test_generators/all_flat')(test_parameters)
+# require('backbone-orm/lib/test_generators/all_flat')(test_parameters)
 require('backbone-rest/lib/test_generators/all')(test_parameters)
