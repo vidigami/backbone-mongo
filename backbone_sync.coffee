@@ -88,22 +88,9 @@ module.exports = class MongoBackboneSync
       options.success?(model, {}, options)
 
   ###################################
-  # Collection Extensions
+  # Backbone ORM - Class Extensions
   ###################################
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
-
-  find: (query, callback) ->
-    [query, callback] = [{}, query] if arguments.length is 1
-    @cursor(query).toModels(callback)
-
-  ###################################
-  # Convenience Functions
-  ###################################
-  all: (callback) -> @cursor({}).toModels callback
-
-  count: (query, callback) ->
-    [query, callback] = [{}, query] if arguments.length is 1
-    @cursor(query).count(callback)
 
   destroy: (query, callback) ->
     @initialize() unless @connection
