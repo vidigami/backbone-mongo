@@ -6,6 +6,7 @@ Queue = require 'queue-async'
 MongoCursor = require './lib/mongo_cursor'
 Schema = require 'backbone-orm/lib/schema'
 Connection = require './lib/connection'
+Utils = require 'backbone-orm/utils'
 
 module.exports = class MongoBackboneSync
 
@@ -14,6 +15,7 @@ module.exports = class MongoBackboneSync
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
     # publish methods and sync on model
+    @model_type.model_name = Utils.urlToModelName(url)
     @model_type._sync = @
     @model_type._schema = new Schema(@model_type)
     @connection = new Connection(url, @model_type._schema)
