@@ -83,7 +83,7 @@ module.exports = class MongoBackboneSync
           options.success?(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
-    @destroy @backbone_adapter.modelFindQuery(model), (err) ->
+    @destroy model.get('id'), (err) ->
       return options.error(model, err, options) if err
       options.success?(model, {}, options)
 
@@ -96,6 +96,7 @@ module.exports = class MongoBackboneSync
     [query, callback] = [{}, query] if arguments.length is 1
     @connection.collection (err, collection) =>
       return callback(err) if err
+      query = {id: query} unless _.isObject(query)
       collection.remove @backbone_adapter.attributesToNative(query), callback
 
   # options:
