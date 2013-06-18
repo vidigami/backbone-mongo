@@ -101,6 +101,7 @@ module.exports = class MongoBackboneSync
       query = {id: query} unless _.isObject(query)
       collection.remove @backbone_adapter.attributesToNative(query), callback
 
+  schema: (key) -> @model_type._schema
   relation: (key) -> @model_type._schema.relation(key)
 
   # options:
