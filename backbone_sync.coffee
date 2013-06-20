@@ -97,7 +97,6 @@ module.exports = class MongoBackboneSync
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
   destroy: (query, callback) ->
-    [query, callback] = [{}, query] if arguments.length is 1
     @connection.collection (err, collection) =>
       return callback(err) if err
       query = {id: query} unless _.isObject(query)
