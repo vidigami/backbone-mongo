@@ -6,19 +6,20 @@ Queue = require 'queue-async'
 MongoCursor = require './lib/mongo_cursor'
 Schema = require 'backbone-orm/lib/schema'
 Connection = require './lib/connection'
-Utils = require 'backbone-orm/utils'
+Utils = require 'backbone-orm/lib/utils'
 
-module.exports = class MongoBackboneSync
+module.exports = class MongoSync
 
   constructor: (@model_type) ->
-    throw new Error 'Missing url for model' unless url = _.result((new @model_type()), 'url')
+    throw new Error("Missing url for model") unless @url = _.result(@model_type.prototype, 'url')
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
     # publish methods and sync on model
-    @model_type.model_name = Utils.urlToModelName(url)
+    @model_type.model_name = Utils.urlToModelName(@url)
     @model_type._sync = @
     @model_type._schema = new Schema(@model_type)
-    @connection = new Connection(url, @model_type._schema)
+
+    @connection = new Connection(@url, @model_type._schema)
 
   initialize: (model) ->
     return if @is_initialized; @is_initialized = true
@@ -163,7 +164,7 @@ module.exports = class MongoBackboneSync
 
 
 module.exports = (model_type, cache) ->
-  sync = new MongoBackboneSync(model_type)
+  sync = new MongoSync(model_type)
 
   sync_fn = (method, model, options={}) ->
     sync['initialize']()
@@ -171,4 +172,4 @@ module.exports = (model_type, cache) ->
     sync[method].apply(sync, Array::slice.call(arguments, 1))
 
   require('backbone-orm/lib/model_extensions')(model_type, sync_fn) # mixin extensions
-  return if cache then require('backbone-orm/cache_sync')(model_type, sync_fn) else sync_fn
+  return if cache then require('backbone-orm/lib/cache_sync')(model_type, sync_fn) else sync_fn

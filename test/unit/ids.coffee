@@ -3,20 +3,20 @@ assert = require 'assert'
 _ = require 'underscore'
 Backbone = require 'backbone'
 
-Helpers = require 'backbone-orm/utils'
+Helpers = require 'backbone-orm/lib/utils'
 adapters = Helpers.adapters
 
 class IndexedModel extends Backbone.Model
   @schema:
     _id: [indexed: true]
   url: "#{require('../config/database')['test']}/indexed_models"
-  sync: require('../../backbone_sync')(IndexedModel)
+  sync: require('../../sync')(IndexedModel)
 
 class ManualIdModel extends Backbone.Model
   @schema:
     id: [indexed: true, manual_id: true]
   url: "#{require('../config/database')['test']}/indexed_models"
-  sync: require('../../backbone_sync')(ManualIdModel)
+  sync: require('../../sync')(ManualIdModel)
 
 
 describe 'ID Functionality', ->
