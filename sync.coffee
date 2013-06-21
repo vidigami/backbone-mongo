@@ -12,13 +12,14 @@ module.exports = class MongoSync
 
   constructor: (@model_type) ->
     throw new Error("Missing url for model") unless @url = _.result(@model_type.prototype, 'url')
-    @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
+    url_parts = Utils.parseUrl(@url)
 
     # publish methods and sync on model
-    @model_type.model_name = Utils.urlToModelName(@url)
+    @model_type.model_name = url_parts.model_name
     @model_type._sync = @
     @model_type._schema = new Schema(@model_type)
 
+    @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
     @connection = new Connection(@url, @model_type._schema)
 
   initialize: (model) ->

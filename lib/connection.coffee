@@ -1,8 +1,9 @@
 util = require 'util'
-URL = require 'url'
 _ = require 'underscore'
 Queue = require 'queue-async'
 mongodb = require 'mongodb'
+
+Utils = require 'backbone-orm/lib/utils'
 
 # two minutes
 RETRY_COUNT = 120
@@ -29,39 +30,28 @@ module.exports = class Connection
   constructor: (@url, @schema={}) ->
     @collection_requests = []
     throw new Error 'Expecting a string url' unless _.isString(@url)
-    url_parts = URL.parse(@url)
-    config =
-      host: url_parts.hostname
-      port: url_parts.port
-    if url_parts.auth
-      auth_parts = url_parts.auth.split(':')
-      config.user = auth_parts[0]
-      config.password = if auth_parts.length > 1 then auth_parts[1] else null
+    url_parts = Utils.parseUrl(@url)
 
-    database_parts = url_parts.pathname.split('/')
-    database = database_parts[1]
-    table = database_parts[2]
-
-    console.log "MongoDB for '#{table}' is: '#{config.host}:#{config.port}/#{database}'"
-    @client = new mongodb.Db(database, new mongodb.Server(config.host, config.port, {}), {safe: true})
+    console.log "MongoDB for '#{url_parts.table}' is: '#{url_parts.host}:#{url_parts.port}/#{url_parts.database}'"
+    @client = new mongodb.Db(url_parts.database, new mongodb.Server(url_parts.host, url_parts.port, {}), {safe: true})
 
     queue = Queue(1)
     queue.defer (callback) =>
       doOpen = (callback) => @client.open callback
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB client open: #{table}", doOpen, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB client open: #{url_parts.table}", doOpen, callback)
 
     queue.defer (callback) =>
-      if config.user
-        @client.authenticate(config.user, config.password, callback)
+      if url_parts.user
+        @client.authenticate(url_parts.user, url_parts.password, callback)
       else
         callback()
 
     queue.defer (callback) =>
 
       doConnectToCollection = (callback) =>
-        @client.collection table, (err, collection) =>
+        @client.collection url_parts.table, (err, collection) =>
           return callback(err) if err
 
           for field_name, field_info of @schema
@@ -71,8 +61,8 @@ module.exports = class Connection
               do (field_name) ->
                 index_info = {}; index_info[field_name] = 1
                 collection.ensureIndex index_info, {background: true}, (err) =>
-                  return new Error("MongoBackbone: Failed to indexed '#{field_name}' on #{table}. Reason: #{err}") if err
-                  console.log("MongoBackbone: Successfully indexed '#{field_name}' on #{table}")
+                  return new Error("MongoBackbone: Failed to indexed '#{field_name}' on #{url_parts.table}. Reason: #{err}") if err
+                  console.log("MongoBackbone: Successfully indexed '#{field_name}' on #{url_parts.table}")
               break
 
           # deal with waiting requests
@@ -82,7 +72,7 @@ module.exports = class Connection
           callback()
 
       # socket retries
-      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{table}", doConnectToCollection, callback)
+      connectionRetry(RETRY_COUNT, "MongoDB collection connect: #{url_parts.table}", doConnectToCollection, callback)
 
     queue.await (err) =>
       if err
