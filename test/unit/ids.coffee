@@ -3,8 +3,7 @@ assert = require 'assert'
 _ = require 'underscore'
 Backbone = require 'backbone'
 
-Helpers = require 'backbone-orm/lib/utils'
-adapters = Helpers.adapters
+Utils = require 'backbone-orm/lib/utils'
 
 class IndexedModel extends Backbone.Model
   @schema:
@@ -47,20 +46,20 @@ describe 'ID Functionality', ->
   describe 'manual_id', ->
     it 'should fail to save if you do not provide an id', (done) ->
       model = new ManualIdModel({name: 'Bob'})
-      model.save {}, adapters.bbCallback (err) ->
+      model.save {}, Utils.bbCallback (err) ->
         assert.ok(err, 'should not save if missing an id')
         done()
 
     it 'should save if provide an id', (done) ->
       model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
-      model.save {}, adapters.bbCallback (err) ->
+      model.save {}, Utils.bbCallback (err) ->
         assert.ok(!err, "No errors: #{err}")
         done()
 
     it 'should fail to save if you delete the id after saving', (done) ->
       model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
-      model.save {}, adapters.bbCallback (err) ->
+      model.save {}, Utils.bbCallback (err) ->
         assert.ok(!err, "No errors: #{err}")
-        model.save {id: null}, adapters.bbCallback (err) ->
+        model.save {id: null}, Utils.bbCallback (err) ->
           assert.ok(err, 'should not save if missing an id')
           done()
