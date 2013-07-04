@@ -23,7 +23,7 @@ module.exports = class MongoCursor extends Cursor
     @connection.collection (err, collection) =>
       return callback(err) if err
       args = [@backbone_adapter.attributesToNative(@_find)]
-      args._id = {$in: _.map(ids, (id) -> new ObjectID("#{id}"))} if @_cursor.$ids
+      args[0][@backbone_adapter.idAttribute] = {$in: _.map(@_cursor.$ids, @backbone_adapter.findId)} if @_cursor.$ids
 
       # only select specific fields
       if @_cursor.$values

@@ -17,3 +17,5 @@ Test
 Run the unit tests one time:
 
   $ npm test
+
+If you are running in file descriptor availability issues on Mac OSX: http://superuser.com/questions/261023/how-to-change-default-ulimit-values-in-mac-os-x-10-6

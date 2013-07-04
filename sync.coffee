@@ -6,23 +6,24 @@ Queue = require 'queue-async'
 MongoCursor = require './lib/mongo_cursor'
 Schema = require 'backbone-orm/lib/schema'
 Connection = require './lib/connection'
-Utils = require 'backbone-orm/utils'
+Utils = require 'backbone-orm/lib/utils'
 
-module.exports = class MongoBackboneSync
+module.exports = class MongoSync
 
   constructor: (@model_type) ->
-    throw new Error 'Missing url for model' unless url = _.result((new @model_type()), 'url')
-    @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
+    throw new Error("Missing url for model") unless @url = _.result(@model_type.prototype, 'url')
 
     # publish methods and sync on model
-    @model_type.model_name = Utils.urlToModelName(url)
-    @model_type._sync = @
-    @model_type._schema = new Schema(@model_type)
-    @connection = new Connection(url, @model_type._schema)
+    @model_type.model_name = Utils.parseUrl(@url).model_name unless @model_type.model_name # model_name can be manually set
+    throw new Error('Missing model_name for model') unless @model_type.model_name
+    @schema = new Schema(@model_type)
+
+    @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
+    @model_type._connection = @connection = new Connection(@url, @schema)
 
   initialize: (model) ->
     return if @is_initialized; @is_initialized = true
-    @model_type._schema.initialize()
+    @schema.initialize()
 
   ###################################
   # Classic Backbone Sync
@@ -95,14 +96,11 @@ module.exports = class MongoBackboneSync
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
   destroy: (query, callback) ->
-    [query, callback] = [{}, query] if arguments.length is 1
     @connection.collection (err, collection) =>
       return callback(err) if err
       query = {id: query} unless _.isObject(query)
       collection.remove @backbone_adapter.attributesToNative(query), callback
 
-  schema: (key) -> @model_type._schema
-  relation: (key) -> @model_type._schema.relation(key)
 
   # options:
   #  @key: default 'created_at'
@@ -162,11 +160,14 @@ module.exports = class MongoBackboneSync
 
 
 module.exports = (model_type, cache) ->
-  sync = new MongoBackboneSync(model_type)
+  sync = new MongoSync(model_type)
 
-  sync_fn = (method, model, options={}) ->
-    sync['initialize']()
-    sync[method].apply(sync, Array::slice.call(arguments, 1))
+  model_type::sync = sync_fn = (method, model, options={}) -> # save for access by model extensions
+    sync.initialize()
+    return module.exports.apply(null, Array::slice.call(arguments, 1)) if method is 'createSync' # create a new sync
+    return sync if method is 'sync'
+    return sync.schema if method is 'schema'
+    if sync[method] then sync[method].apply(sync, Array::slice.call(arguments, 1)) else return undefined
 
-  require('backbone-orm/lib/model_extensions')(model_type, sync_fn) # mixin extensions
-  return if cache then require('backbone-orm/cache_sync')(model_type, sync_fn) else sync_fn
+  require('backbone-orm/lib/model_extensions')(model_type) # mixin extensions
+  return if cache then require('backbone-orm/lib/cache_sync')(model_type, sync_fn) else sync_fn
