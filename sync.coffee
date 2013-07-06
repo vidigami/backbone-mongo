@@ -65,26 +65,19 @@ module.exports = class MongoSync
       find_query._rev = json._rev
       json._rev++ # increment revisions
 
+      modifications = {$set: json}
+      if changes = model.changedAttributes() # look for unset things
+        keys_to_delete = []
+        keys_to_delete.push(key) for key, value of changes when _.isUndefined(value)
+        if keys_to_delete.length
+          modifications.$unset = {}
+          modifications.$unset[key] = '' for key in keys_to_delete
+
       # update the record
-      collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$set: json}, {new: true}, (err, doc) =>
+      collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], modifications, {new: true}, (err, doc) =>
         return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
         return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
-
-        # look for removed attributes that need to be deleted
-        expected_keys = _.keys(json); expected_keys.push('_id'); saved_keys = _.keys(doc)
-        keys_to_delete = _.difference(saved_keys, expected_keys)
-        return options.success?(@backbone_adapter.nativeToAttributes(doc)) unless keys_to_delete.length
-
-        # delete/unset attributes and update the revision
-        find_query._rev = json._rev
-        json._rev++ # increment revisions
-        keys = {}
-        keys[key] = '' for key in keys_to_delete
-        collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$unset: keys, $set: {_rev: json._rev}}, {new: true}, (err, doc) =>
-          # TODO: KNOWN BUG: sometimes the document is not returned - test with restarting jobs that deletes started_at
-          return options.error(new Error("Failed to update model (remove attributes). Doc: #{!!doc}. Error: #{err}")) if err or not doc
-          return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
-          options.success?(@backbone_adapter.nativeToAttributes(doc))
+        return options.success?(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
     @destroy model.get('id'), (err) ->
