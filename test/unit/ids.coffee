@@ -29,7 +29,7 @@ describe 'ID Functionality', ->
 
       # indexing is async so need to poll
       checkIndexes = ->
-        IndexedModel._connection.collection (err, collection) ->
+        IndexedModel::sync 'collection', (err, collection) ->
           assert.ok(!err, "No errors: #{err}")
 
           collection.indexExists '_id_', (err, exists) ->
