@@ -80,18 +80,15 @@ module.exports = class Connection
         collection_requests = _.clone(@collection_requests); @collection_requests = []
         request(new Error("Connection failed")) for request in collection_requests
 
-  collection: (callback) ->
-    return callback(new Error("Client closed")) unless @client
-    return callback(new Error("Connection failed")) if @failed_connection
-    return callback(null, @_collection) if @_collection
-    @collection_requests.push(callback)
-
-  ##
-  # Close the database connection
-  ##
-  close: () ->
+  destroy: ->
     return unless @client # already closed
     collection_requests = _.clone(@collection_requests); @collection_requests = []
     request(new Error("Client closed")) for request in collection_requests
     @_collection = null
     @client.close(); @client = null
+
+  collection: (callback) ->
+    return callback(new Error("Client closed")) unless @client
+    return callback(new Error("Connection failed")) if @failed_connection
+    return callback(null, @_collection) if @_collection
+    @collection_requests.push(callback)

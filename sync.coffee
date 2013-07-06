@@ -17,17 +17,15 @@ module.exports = class MongoSync
   initialize: (model) ->
     return if @is_initialized; @is_initialized = true
 
-    throw new Error("Missing url for model") unless @url = _.result(@model_type.prototype, 'url')
+    throw new Error("Missing url for model") unless url = _.result(@model_type.prototype, 'url')
 
     # publish methods and sync on model
-    @model_type.model_name = Utils.parseUrl(@url).model_name unless @model_type.model_name # model_name can be manually set
+    @model_type.model_name = Utils.parseUrl(url).model_name unless @model_type.model_name # model_name can be manually set
     throw new Error('Missing model_name for model') unless @model_type.model_name
 
-    @connection = new Connection(@url, @schema)
+    @connect(url)
 
     @schema.initialize()
-
-  collection: (callback) -> @connection.collection callback
 
   ###################################
   # Classic Backbone Sync
@@ -99,6 +97,16 @@ module.exports = class MongoSync
       query = {id: query} unless _.isObject(query)
       collection.remove @backbone_adapter.attributesToNative(query), callback
 
+
+  ###################################
+  # Backbone Mongo - Extensions
+  ###################################
+  connect: (url) ->
+    return if @connection and @connection.url is url
+    @connection.destroy() if @connection
+    @connection = new Connection(url, @schema)
+
+  collection: (callback) -> @connection.collection(callback)
 
   # options:
   #  @key: default 'created_at'
