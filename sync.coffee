@@ -67,7 +67,7 @@ module.exports = class MongoSync
 
       # update the record
       collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$set: json}, {new: true}, (err, doc) =>
-        return options.error(new Error("Failed to update model. #{err}")) if err or not doc
+        return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
         return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
 
         # look for removed attributes that need to be deleted
@@ -81,7 +81,8 @@ module.exports = class MongoSync
         keys = {}
         keys[key] = '' for key in keys_to_delete
         collection.findAndModify find_query, [[@backbone_adapter.idAttribute,'asc']], {$unset: keys, $set: {_rev: json._rev}}, {new: true}, (err, doc) =>
-          return options.error(new Error("Failed to update model. #{err}")) if err or not doc
+          # TODO: KNOWN BUG: sometimes the document is not returned - test with restarting jobs that deletes started_at
+          return options.error(new Error("Failed to update model (remove attributes). Doc: #{!!doc}. Error: #{err}")) if err or not doc
           return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
           options.success?(@backbone_adapter.nativeToAttributes(doc))
 
