@@ -108,49 +108,6 @@ module.exports = class MongoSync
 
   collection: (callback) -> @connection.collection(callback)
 
-  # options:
-  #  @key: default 'created_at'
-  #  @reverse: default false
-  #  @date: default now
-  #  @query: default none
-  findOneNearDate: (options, callback) ->
-    key = options.key or 'created_at'
-    date = options.date or moment.utc().toDate()
-    query = _.clone(options.query or {})
-
-    findForward = (callback) =>
-      query[key] = {$lte: date.toISOString()}
-      @model_type.findCursor query, (err, cursor) =>
-        return callback(err) if err
-
-        cursor.limit(1).sort([[key, 'desc']]).toArray (err, docs) =>
-          return callback(err) if err
-          return callback(null, null) unless docs.length
-
-          callback(null, @model_type.docsToModels(docs)[0])
-
-    findReverse = (callback) =>
-      query[key] = {$gte: date.toISOString()}
-      @model_type.findCursor query, (err, cursor) =>
-        return callback(err) if err
-
-        cursor.limit(1).sort([[key, 'asc']]).toArray (err, docs) =>
-          return callback(err) if err
-          return callback(null, null) unless docs.length
-
-          callback(null, @model_type.docsToModels(docs)[0])
-
-    if options.reverse
-      findReverse (err, model) =>
-        return callback(err) if err
-        return callback(null, model) if model
-        findForward callback
-    else
-      findForward (err, model) =>
-        return callback(err) if err
-        return callback(null, model) if model
-        findReverse callback
-
   ###################################
   # Internal
   ###################################
