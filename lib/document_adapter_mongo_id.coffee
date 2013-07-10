@@ -11,20 +11,14 @@ module.exports = class DocumentAdapter_MongoId
 
   @nativeToAttributes: (doc) ->
     return {} unless doc
-    for key, value of doc
-      if key is '_id'
-        doc.id = doc['_id'].toString()
-        delete doc._id
-      else
-        doc[key] = JSONUtils.JSONToValue(value)
+    if doc._id
+      doc.id = doc._id.toString()
+      delete doc._id
     return doc
 
   @attributesToNative: (attributes) ->
     return {} unless attributes
-    for key, value of attributes
-      if key is 'id'
-        attributes['_id'] = new ObjectID("#{value}")
-        delete attributes.id
-      else
-        attributes[key] = JSONUtils.valueToJSON(value)
+    if attributes.id
+      attributes._id = new ObjectID("#{attributes.id}")
+      delete attributes.id
     return attributes

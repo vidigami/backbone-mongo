@@ -84,15 +84,3 @@ module.exports = class MongoCursor extends Cursor
             callback(null, json)
 
       collection.find.apply(collection, args)
-
-  # ##############################################
-  # # Intervals
-  # ##############################################
-  # intervalIterator: (key, callback) ->
-  #   return callback(new Error("missing find time key")) unless @_find.hasOwnProperty(key)
-
-  #   try
-  #     return callback(null, new IntervalIterator({interval_type: @_cursor.$interval_type, interval_length: @_cursor.$interval_length, key: key, range_query: @_find[key], model_type: @model_type}))
-  #   catch err
-  #     return callback err
-
