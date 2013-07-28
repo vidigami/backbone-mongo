@@ -18,9 +18,9 @@ describe 'Dynamic Attributes Functionality', ->
       model.save {}, Utils.bbCallback (err) ->
         assert.ok(!err, "No errors: #{err}")
 
-        MongoModel.findOne model.get('id'), (err, saved_model) ->
+        MongoModel.findOne model.id, (err, saved_model) ->
           assert.ok(!err, "No errors: #{err}")
-          assert.ok(!!saved_model, "Found model: #{model.get('id')}")
+          assert.ok(!!saved_model, "Found model: #{model.id}")
           assert.deepEqual(model.toJSON(), saved_model.toJSON(), "Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
 
           # unset and confirm different instances
@@ -31,9 +31,9 @@ describe 'Dynamic Attributes Functionality', ->
             assert.ok(!err, "No errors: #{err}")
             assert.ok(_.isUndefined(model.get('type')), "Attribute is still unset")
 
-            MongoModel.findOne model.get('id'), (err, saved_model) ->
+            MongoModel.findOne model.id, (err, saved_model) ->
               assert.ok(!err, "No errors: #{err}")
-              assert.ok(!!saved_model, "Found model: #{model.get('id')}")
+              assert.ok(!!saved_model, "Found model: #{model.id}")
               assert.ok(_.isUndefined(saved_model.get('type')), "Attribute was unset")
 
               assert.deepEqual(model.toJSON(), saved_model.toJSON(), "Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
@@ -46,9 +46,9 @@ describe 'Dynamic Attributes Functionality', ->
                 assert.ok(!err, "No errors: #{err}")
                 assert.ok(!_.isUndefined(model.get('type')), "Attribute is still set")
 
-                MongoModel.findOne model.get('id'), (err, saved_model) ->
+                MongoModel.findOne model.id, (err, saved_model) ->
                   assert.ok(!err, "No errors: #{err}")
-                  assert.ok(!!saved_model, "Found model: #{model.get('id')}")
+                  assert.ok(!!saved_model, "Found model: #{model.id}")
                   assert.ok(!_.isUndefined(saved_model.get('type')), "Attribute was set")
 
                   assert.deepEqual(model.toJSON(), saved_model.toJSON(), "Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")

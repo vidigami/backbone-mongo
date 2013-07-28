@@ -7,7 +7,7 @@ module.exports = class DocumentAdapter_NoMongoId
   @idAttribute = 'id'
 
   @findId: (id) -> return id
-  @modelFindQuery: (model) -> return {id: model.get('id')}
+  @modelFindQuery: (model) -> return {id: model.id}
 
   @nativeToAttributes: (doc) ->
     return {} unless doc

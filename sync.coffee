@@ -39,13 +39,13 @@ module.exports = class MongoSync
 
     # a model
     else
-      @cursor(model.get('id')).toJSON (err, json) ->
+      @cursor(model.id).toJSON (err, json) ->
         return options.error(err) if err
-        return options.error(new Error "Model not found. Id #{model.get('id')}") unless json
+        return options.error(new Error "Model not found. Id #{model.id}") unless json
         options.success?(json)
 
   create: (model, options) ->
-    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.get('id')
+    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
 
     @connection.collection (err, collection) =>
       return options.error(err) if err
@@ -57,7 +57,7 @@ module.exports = class MongoSync
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
-    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.get('id')
+    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
 
     @connection.collection (err, collection) =>
       return options.error(err) if err
@@ -82,7 +82,7 @@ module.exports = class MongoSync
         return options.success?(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
-    @destroy model.get('id'), (err) ->
+    @destroy model.id, (err) ->
       return options.error(model, err, options) if err
       options.success?(model, {}, options)
 
