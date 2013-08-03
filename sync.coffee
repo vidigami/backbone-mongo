@@ -94,7 +94,13 @@ module.exports = class MongoSync
 
     queue.defer (callback) => @collection (err, collection) ->
       return callback(err) if err
-      collection.remove callback
+      collection.remove (err) ->
+        if options.verbose
+          if err
+            console.log "Failed to reset collection: #{collection.collectionName}. Error: #{err}"
+          else
+            console.log "Reset collection: #{collection.collectionName}"
+        callback(err)
 
     queue.defer (callback) =>
       for key, relation of @model_type._relations
