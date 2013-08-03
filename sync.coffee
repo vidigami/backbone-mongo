@@ -89,6 +89,21 @@ module.exports = class MongoSync
   ###################################
   # Backbone ORM - Class Extensions
   ###################################
+  resetSchema: (options, callback) ->
+    queue = new Queue()
+
+    queue.defer (callback) => @collection (err, collection) ->
+      return callback(err) if err
+      collection.remove callback
+
+    queue.defer (callback) =>
+      for key, relation of @model_type._relations
+        if relation.type is 'hasMany' and relation.reverse_relation.type is 'hasMany'
+          do (relation) -> queue.defer (callback) -> Utils.createJoinTableModel(relation).resetSchema(callback)
+      callback()
+
+    queue.await callback
+
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
   destroy: (query, callback) ->

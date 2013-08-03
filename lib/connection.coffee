@@ -32,7 +32,7 @@ module.exports = class Connection
     throw new Error 'Expecting a string url' unless _.isString(@url)
     url_parts = Utils.parseUrl(@url)
 
-    console.log "MongoDB for '#{url_parts.table}' is: '#{url_parts.host}:#{url_parts.port}/#{url_parts.database}'"
+    # console.log "MongoDB for '#{url_parts.table}' is: '#{url_parts.host}:#{url_parts.port}/#{url_parts.database}'"
     @client = new mongodb.Db(url_parts.database, new mongodb.Server(url_parts.host, url_parts.port, {}), {safe: true})
 
     queue = Queue(1)
