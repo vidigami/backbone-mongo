@@ -136,42 +136,42 @@ module.exports = class MongoCursor extends Cursor
 
     find_query = {}
     for key, value of @_find
-      if key.indexOf('.') >= 0
-        [relation_key, value_key] = key.split('.')
-        unless @model_type.relationIsEmbedded(relation_key) # embedded so a straight query is possible
-          do (relation_key, value_key, value) => queue.defer (callback) =>
-            relation = @model_type.relation(relation_key)
-            if not relation.join_table and (value_key is 'id')
-              find_query["#{relation_key}_#{value_key}"] = value
-              callback()
+      (find_query[key] = value; continue) if (key.indexOf('.') < 0)
 
-            # TODO: implement a proper join
-            else if relation.join_table or (relation.type is 'belongsTo')
-              (related_query = {$values: 'id'})[value_key] = value
-              relation.reverse_relation.model_type.cursor(related_query).toJSON (err, related_ids) =>
-                return callback(err) if err
-                if relation.join_table
-                  (join_query = {})[relation.foreign_key] = {$in: related_ids}
-                  join_query.$values = relation.reverse_relation.foriegn_key
-                  relation.join_table.cursor(join_query).toJSON (err, model_ids) =>
-                    return callback(err) if err
-                    find_query.id = {$in: model_ids}
-                    callback()
-                else
-                  find_query[relation.foreign_key] = {$in: related_ids}
-                  callback()
+      [relation_key, value_key] = key.split('.')
+      (find_query[key] = value; continue) if @model_type.relationIsEmbedded(relation_key) # embedded so a nested query is possible in mongo
 
-            # foreign key is on the model
-            else
-              (related_query = {})[value_key] = value
-              related_query.$values = relation.foreign_key
-              relation.reverse_relation.model_type.cursor(related_query).toJSON (err, model_ids) =>
+      # do a join or lookup
+      do (relation_key, value_key, value) => queue.defer (callback) =>
+        relation = @model_type.relation(relation_key)
+        if not relation.join_table and (value_key is 'id')
+          find_query["#{relation_key}_#{value_key}"] = value
+          callback()
+
+        # TODO: optimize with a one-step join?
+        else if relation.join_table or (relation.type is 'belongsTo')
+          (related_query = {$values: 'id'})[value_key] = value
+          relation.reverse_relation.model_type.cursor(related_query).toJSON (err, related_ids) =>
+            return callback(err) if err
+            if relation.join_table
+              (join_query = {})[relation.foreign_key] = {$in: related_ids}
+              join_query.$values = relation.reverse_relation.foriegn_key
+              relation.join_table.cursor(join_query).toJSON (err, model_ids) =>
                 return callback(err) if err
                 find_query.id = {$in: model_ids}
                 callback()
+            else
+              find_query[relation.foreign_key] = {$in: related_ids}
+              callback()
 
-          continue
-      find_query[key] = value
+        # foreign key is on the model
+        else
+          (related_query = {})[value_key] = value
+          related_query.$values = relation.foreign_key
+          relation.reverse_relation.model_type.cursor(related_query).toJSON (err, model_ids) =>
+            return callback(err) if err
+            find_query.id = {$in: model_ids}
+            callback()
 
     queue.await (err) =>
       # console.log "find_query: #{util.inspect(find_query)}"
