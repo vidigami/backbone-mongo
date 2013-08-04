@@ -4,7 +4,7 @@ JSONUtils = require 'backbone-orm/lib/json_utils'
 
 module.exports = class DocumentAdapter_MongoId
 
-  @idAttribute = '_id'
+  @id_attribute = '_id'
 
   @findId: (id) -> return new ObjectID("#{id}")
   @modelFindQuery: (model) -> return {_id: new ObjectID("#{model.id}")}
