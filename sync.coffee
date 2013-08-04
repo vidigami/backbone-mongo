@@ -103,7 +103,8 @@ module.exports = class MongoSync
         callback(err)
 
     queue.defer (callback) =>
-      for key, relation of @model_type._relations
+      schema = @model_type.schema()
+      for key, relation of schema.relations
         if relation.type is 'hasMany' and relation.reverse_relation.type is 'hasMany'
           do (relation) -> queue.defer (callback) -> Utils.createJoinTableModel(relation).resetSchema(callback)
       callback()

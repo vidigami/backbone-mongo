@@ -62,13 +62,10 @@ module.exports = class MongoCursor extends Cursor
           else if @_cursor.$limit
             cursor = cursor.limit(@_cursor.$limit)
 
-          # only the count
-          return cursor.count(callback) if count
-          if exists # exists
-            return cursor.count (err, count) -> callback(err, !!count)
+          return cursor.count(callback) if count # only the count
+          return cursor.count((err, count) -> callback(err, !!count)) if exists # only if exists
 
           cursor.toArray (err, docs) =>
-
             return callback(err) if err
             json = _.map(docs, (doc) => @backbone_adapter.nativeToAttributes(doc))
 
@@ -89,7 +86,7 @@ module.exports = class MongoCursor extends Cursor
                     do (key, model_json) => load_queue.defer (callback) =>
                       relation.cursor(model_json, key).toJSON (err, related_json) ->
                         return calback(err) if err
-                        # console.log "\nmodel_json: #{util.inspect(model_json)}\nrelated_json: #{util.inspect(related_json)}"
+                        # console.log "\nkey: #{key}, model_json: #{util.inspect(model_json)}\nrelated_json: #{util.inspect(related_json)}"
                         delete model_json[relation.foriegn_key]
                         model_json[key] = related_json
                         callback()
@@ -174,5 +171,5 @@ module.exports = class MongoCursor extends Cursor
             callback()
 
     queue.await (err) =>
-      # console.log "find_query: #{util.inspect(find_query)}"
+      # console.log "\nmodel_name: #{@model_type.model_name} find_query: #{util.inspect(find_query)}"
       callback(err, find_query)
