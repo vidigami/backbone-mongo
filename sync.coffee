@@ -144,7 +144,7 @@ module.exports = class MongoSync
     return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
 
 
-module.exports = (model_type, cache) ->
+module.exports = (model_type) ->
   sync = new MongoSync(model_type)
 
   model_type::sync = sync_fn = (method, model, options={}) -> # save for access by model extensions
@@ -155,4 +155,4 @@ module.exports = (model_type, cache) ->
     if sync[method] then sync[method].apply(sync, Array::slice.call(arguments, 1)) else return undefined
 
   require('backbone-orm/lib/model_extensions')(model_type) # mixin extensions
-  return if cache then require('backbone-orm/lib/cache_sync')(model_type, sync_fn) else sync_fn
+  return require('backbone-orm/lib/cache').configureSync(model_type, sync_fn)
