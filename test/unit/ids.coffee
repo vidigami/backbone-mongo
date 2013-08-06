@@ -4,6 +4,7 @@ _ = require 'underscore'
 Backbone = require 'backbone'
 
 Utils = require 'backbone-orm/lib/utils'
+require('backbone-orm/lib/cache').configure(null) # turn off caching
 
 class IndexedModel extends Backbone.Model
   @schema:

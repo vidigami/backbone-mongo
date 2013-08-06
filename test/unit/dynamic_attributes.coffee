@@ -4,11 +4,11 @@ _ = require 'underscore'
 Backbone = require 'backbone'
 
 Utils = require 'backbone-orm/lib/utils'
+require('backbone-orm/lib/cache').configure(null) # turn off caching
 
 class MongoModel extends Backbone.Model
   url: "#{require('../config/database')['test']}/mongo_model"
   sync: require('../../sync')(MongoModel)
-
 
 describe 'Dynamic Attributes Functionality', ->
 
