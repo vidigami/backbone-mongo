@@ -61,6 +61,7 @@ module.exports = class MongoSync
 
     @connection.collection (err, collection) =>
       return options.error(err) if err
+
       json = @backbone_adapter.attributesToNative(model.toJSON())
       delete json._id if @backbone_adapter.id_attribute is '_id'
       find_query = @backbone_adapter.modelFindQuery(model)
@@ -76,7 +77,7 @@ module.exports = class MongoSync
           modifications.$unset[key] = '' for key in keys_to_delete
 
       # update the record
-      collection.findAndModify find_query, [[@backbone_adapter.id_attribute,'asc']], modifications, {new: true}, (err, doc) =>
+      collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
         return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
         return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
         return options.success?(@backbone_adapter.nativeToAttributes(doc))
