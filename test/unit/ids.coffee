@@ -7,7 +7,7 @@ Queue = require 'queue-async'
 Utils = require 'backbone-orm/lib/utils'
 
 runTests = (options, cache, callback) ->
-  require('backbone-orm/lib/cache').configure(null) # turn off caching
+  require('backbone-orm/lib/cache').configure(if cache then {max: 100} else null) # configure caching
 
   class IndexedModel extends Backbone.Model
     @schema:
@@ -37,6 +37,8 @@ runTests = (options, cache, callback) ->
         # indexing is async so need to poll
         checkIndexes = ->
           IndexedModel::sync 'collection', (err, collection) ->
+            console.log "collection"
+
             assert.ok(!err, "No errors: #{err}")
 
             collection.indexExists '_id_', (err, exists) ->
@@ -74,5 +76,5 @@ runTests = (options, cache, callback) ->
 module.exports = (options, callback) ->
   queue = new Queue(1)
   queue.defer (callback) -> runTests(options, false, callback)
-  # queue.defer (callback) -> runTests(options, true, callback)
+  queue.defer (callback) -> runTests(options, true, callback)
   queue.await callback
