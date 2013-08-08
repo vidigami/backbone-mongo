@@ -11,21 +11,21 @@ Utils = require 'backbone-orm/lib/utils'
 module.exports = class MongoSync
 
   constructor: (@model_type) ->
+    # set up model name
+    unless @model_type.model_name # model_name can be manually set
+      throw new Error("Missing url for model") unless url = _.result(@model_type.prototype, 'url')
+      @model_type.model_name = Utils.parseUrl(url).model_name
+    throw new Error('Missing model_name for model') unless @model_type.model_name
+
     @schema = new Schema(@model_type)
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
   initialize: (model) ->
     return if @is_initialized; @is_initialized = true
 
-    throw new Error("Missing url for model") unless url = _.result(@model_type.prototype, 'url')
-
-    # publish methods and sync on model
-    @model_type.model_name = Utils.parseUrl(url).model_name unless @model_type.model_name # model_name can be manually set
-    throw new Error('Missing model_name for model') unless @model_type.model_name
-
-    @connect(url)
-
     @schema.initialize()
+    throw new Error("Missing url for model") unless url = _.result(@model_type.prototype, 'url')
+    @connect(url)
 
   ###################################
   # Classic Backbone Sync
@@ -34,33 +34,33 @@ module.exports = class MongoSync
     # a collection
     if model.models
       @cursor().toJSON (err, json) ->
-        return options.error(err) if err
-        options.success?(json)
+        return options.error(model, err) if err
+        options.success(json)
 
     # a model
     else
       @cursor(model.id).toJSON (err, json) ->
-        return options.error(err) if err
+        return options.error(model, err) if err
         return options.error(new Error "Model not found. Id #{model.id}") unless json
-        options.success?(json)
+        options.success(json)
 
   create: (model, options) ->
     return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
 
     @connection.collection (err, collection) =>
-      return options.error(err) if err
+      return options.error(model, err) if err
       return options.error(new Error('new document has a non-empty revision')) if model.get('_rev')
       doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
         return options.error(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
-        options.success?(@backbone_adapter.nativeToAttributes(docs[0]))
+        options.success(@backbone_adapter.nativeToAttributes(docs[0]))
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
     return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
 
     @connection.collection (err, collection) =>
-      return options.error(err) if err
+      return options.error(model, err) if err
 
       json = @backbone_adapter.attributesToNative(model.toJSON())
       delete json._id if @backbone_adapter.id_attribute is '_id'
@@ -80,12 +80,12 @@ module.exports = class MongoSync
       collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
         return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
         return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
-        return options.success?(@backbone_adapter.nativeToAttributes(doc))
+        return options.success(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
     @destroy model.id, (err) ->
       return options.error(model, err, options) if err
-      options.success?(model, {}, options)
+      options.success(model, {}, options)
 
   ###################################
   # Backbone ORM - Class Extensions
