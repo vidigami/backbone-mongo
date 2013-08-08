@@ -24,6 +24,8 @@ module.exports = class MongoCursor extends MemoryCursor
     exists = @hasCursorQuery('$exists')
 
     @buildFindQuery (err, find_query) =>
+      return callback(err) if err
+
       args = [find_query]
 
       if id = args[0].id
