@@ -11,12 +11,7 @@ Utils = require 'backbone-orm/lib/utils'
 module.exports = class MongoSync
 
   constructor: (@model_type) ->
-    # set up model name
-    unless @model_type.model_name # model_name can be manually set
-      throw new Error("Missing url for model") unless url = _.result(@model_type.prototype, 'url')
-      @model_type.model_name = Utils.parseUrl(url).model_name
-    throw new Error('Missing model_name for model') unless @model_type.model_name
-
+    @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
     @schema = new Schema(@model_type)
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 

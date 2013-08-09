@@ -71,7 +71,7 @@ module.exports = class MongoCursor extends MemoryCursor
             return callback(err) if err
             return callback(null, if json.length then json[0] else null) if @_cursor.$one
 
-            json = @selectResults(json, callback)
+            json = @selectResults(json)
             if @hasCursorQuery('$page')
               cursor.count (err, count) =>
                 return callback(err) if err
