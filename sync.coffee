@@ -1,5 +1,6 @@
 util = require 'util'
 _ = require 'underscore'
+Backbone = require 'backbone'
 moment = require 'moment'
 Queue = require 'queue-async'
 
@@ -140,15 +141,18 @@ module.exports = class MongoSync
     return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
 
 
-module.exports = (model_type) ->
-  sync = new MongoSync(model_type)
+module.exports = (type) ->
+  if (new type()) instanceof Backbone.Collection # collection
+    model_type = Utils.configureCollectionModelType(type, module.exports)
+    return type::sync = model_type::sync
 
-  model_type::sync = sync_fn = (method, model, options={}) -> # save for access by model extensions
+  sync = new MongoSync(type)
+  type::sync = sync_fn = (method, model, options={}) -> # save for access by model extensions
     sync.initialize()
     return module.exports.apply(null, Array::slice.call(arguments, 1)) if method is 'createSync' # create a new sync
     return sync if method is 'sync'
     return sync.schema if method is 'schema'
     return if sync[method] then sync[method].apply(sync, Array::slice.call(arguments, 1)) else undefined
 
-  require('backbone-orm/lib/model_extensions')(model_type) # mixin extensions
-  return require('backbone-orm/lib/cache').configureSync(model_type, sync_fn)
+  require('backbone-orm/lib/model_extensions')(type) # mixin extensions
+  return require('backbone-orm/lib/cache').configureSync(type, sync_fn)
