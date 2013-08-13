@@ -152,6 +152,7 @@ module.exports = (type) ->
     return module.exports.apply(null, Array::slice.call(arguments, 1)) if method is 'createSync' # create a new sync
     return sync if method is 'sync'
     return sync.schema if method is 'schema'
+    return false if method is 'isRemote'
     return if sync[method] then sync[method].apply(sync, Array::slice.call(arguments, 1)) else undefined
 
   require('backbone-orm/lib/model_extensions')(type) # mixin extensions
