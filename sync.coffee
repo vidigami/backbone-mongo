@@ -8,6 +8,9 @@ MongoCursor = require './lib/mongo_cursor'
 Schema = require 'backbone-orm/lib/schema'
 Connection = require './lib/connection'
 Utils = require 'backbone-orm/lib/utils'
+bbCallback = Utils.bbCallback
+
+DESTROY_BATCH_LIMIT = 1000
 
 module.exports = class MongoSync
 
@@ -79,9 +82,11 @@ module.exports = class MongoSync
         return options.success(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
-    @destroy model.id, (err) ->
-      return options.error(model, err, options) if err
-      options.success(model, {}, options)
+    @connection.collection (err, collection) =>
+      return options.error(err) if err
+      collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
+        return options.error(err) if err
+        options.success()
 
   ###################################
   # Backbone ORM - Class Extensions
@@ -113,9 +118,10 @@ module.exports = class MongoSync
   destroy: (query, callback) ->
     @connection.collection (err, collection) =>
       return callback(err) if err
-      query = {id: query} unless _.isObject(query)
-      collection.remove @backbone_adapter.attributesToNative(query), callback
-
+      @model_type.batch query, {$limit: DESTROY_BATCH_LIMIT, method: 'toJSON'}, callback, (model_json, callback) =>
+        Utils.destroyRelationsByJSON @model_type, model_json, (err) =>
+          return callback(err) if err
+          collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), callback
 
   ###################################
   # Backbone Mongo - Extensions
