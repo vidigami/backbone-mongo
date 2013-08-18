@@ -76,7 +76,7 @@ module.exports = class MongoCursor extends MemoryCursor
               cursor.count (err, count) =>
                 return callback(err) if err
                 callback(null, {
-                  offset: @_cursor.$offset
+                  offset: @_cursor.$offset or 0
                   total_rows: count
                   rows: json
                 })
