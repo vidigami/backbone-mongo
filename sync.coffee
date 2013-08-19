@@ -33,13 +33,13 @@ module.exports = class MongoSync
     # a collection
     if model.models
       @cursor().toJSON (err, json) ->
-        return options.error(model, err) if err
+        return options.error(err) if err
         options.success(json)
 
     # a model
     else
       @cursor(model.id).toJSON (err, json) ->
-        return options.error(model, err) if err
+        return options.error(err) if err
         return options.error(new Error "Model not found. Id #{model.id}") unless json
         options.success(json)
 
@@ -47,7 +47,7 @@ module.exports = class MongoSync
     return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
 
     @connection.collection (err, collection) =>
-      return options.error(model, err) if err
+      return options.error(err) if err
       return options.error(new Error('new document has a non-empty revision')) if model.get('_rev')
       doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
@@ -59,7 +59,7 @@ module.exports = class MongoSync
     return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
 
     @connection.collection (err, collection) =>
-      return options.error(model, err) if err
+      return options.error(err) if err
 
       json = @backbone_adapter.attributesToNative(model.toJSON())
       delete json._id if @backbone_adapter.id_attribute is '_id'
