@@ -21,6 +21,7 @@ module.exports = class MongoCursor extends MemoryCursor
   # Execution of the Query
   ##############################################
   toJSON: (callback) ->
+    return callback(null, if @hasCursorQuery('$one') then null else []) if @hasCursorQuery('$zero')
     exists = @hasCursorQuery('$exists')
 
     @buildFindQuery (err, find_query) =>
