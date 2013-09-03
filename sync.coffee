@@ -119,7 +119,7 @@ module.exports = class MongoSync
     @connection.collection (err, collection) =>
       return callback(err) if err
       @model_type.batch query, {$limit: DESTROY_BATCH_LIMIT, method: 'toJSON'}, callback, (model_json, callback) =>
-        Utils.destroyRelationsByJSON @model_type, model_json, (err) =>
+        Utils.patchRemoveByJSON @model_type, model_json, (err) =>
           return callback(err) if err
           collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), callback
 
