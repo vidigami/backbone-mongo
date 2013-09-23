@@ -54,16 +54,12 @@ module.exports = class Connection
         @client.collection url_parts.table, (err, collection) =>
           return callback(err) if err
 
-          for field_name, field_info of @schema
-            continue unless _.isArray(field_info)
-            for info in field_info
-              continue unless info.indexed
-              do (field_name) ->
-                index_info = {}; index_info[field_name] = 1
-                collection.ensureIndex index_info, {background: true}, (err) =>
-                  return new Error("MongoBackbone: Failed to indexed '#{field_name}' on #{url_parts.table}. Reason: #{err}") if err
-                  console.log("MongoBackbone: Successfully indexed '#{field_name}' on #{url_parts.table}")
-              break
+          for key, field of @schema.fields
+            @ensureIndex(collection, key, url_parts.table) if field.indexed
+
+          for key, relation of @schema.relations
+            if relation.type is 'belongsTo' and not relation.isVirtual() and not relation.isEmbedded()
+              @ensureIndex(collection, relation.foreign_key, url_parts.table)
 
           # deal with waiting requests
           collection_requests = _.clone(@collection_requests); @collection_requests = []
@@ -92,3 +88,10 @@ module.exports = class Connection
     return callback(new Error("Connection failed")) if @failed_connection
     return callback(null, @_collection) if @_collection
     @collection_requests.push(callback)
+
+
+  ensureIndex: (collection, field_name, table_name) =>
+    index_info = {}; index_info[field_name] = 1
+    collection.ensureIndex index_info, {background: true}, (err) =>
+      return new Error("MongoBackbone: Failed to indexed '#{field_name}' on #{table_name}. Reason: #{err}") if err
+      console.log("MongoBackbone: Successfully indexed '#{field_name}' on #{table_name}")
