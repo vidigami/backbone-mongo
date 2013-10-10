@@ -8,6 +8,7 @@ MongoCursor = require './lib/mongo_cursor'
 Schema = require 'backbone-orm/lib/schema'
 Connection = require './lib/connection'
 Utils = require 'backbone-orm/lib/utils'
+QueryCache = require 'backbone-orm/lib/query_cache'
 bbCallback = Utils.bbCallback
 
 DESTROY_BATCH_LIMIT = 1000
@@ -52,6 +53,7 @@ module.exports = class MongoSync
       doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
         return options.error(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
+        QueryCache.reset(@model_type)
         options.success(@backbone_adapter.nativeToAttributes(docs[0]))
 
   update: (model, options) ->
@@ -79,6 +81,7 @@ module.exports = class MongoSync
       collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
         return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
         return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
+        QueryCache.reset(@model_type)
         return options.success(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
@@ -86,6 +89,7 @@ module.exports = class MongoSync
       return options.error(err) if err
       collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
         return options.error(err) if err
+        QueryCache.reset(@model_type)
         options.success()
 
   ###################################
@@ -121,7 +125,9 @@ module.exports = class MongoSync
       @model_type.batch query, {$limit: DESTROY_BATCH_LIMIT, method: 'toJSON'}, callback, (model_json, callback) =>
         Utils.patchRemoveByJSON @model_type, model_json, (err) =>
           return callback(err) if err
-          collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), callback
+          collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
+            QueryCache.reset(@model_type)
+            callback(err)
 
   ###################################
   # Backbone Mongo - Extensions
