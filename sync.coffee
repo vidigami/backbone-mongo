@@ -52,7 +52,7 @@ module.exports = class MongoSync
       return options.error(new Error('new document has a non-empty revision')) if model.get('_rev')
       doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
       collection.insert doc, (err, docs) =>
-        return options.error(new Error("Failed to create model")) if err or not docs or docs.length isnt 1
+        return options.error(new Error("Failed to create model. Error: #{err or 'document not found'}")) if err or not docs or docs.length isnt 1
         QueryCache.reset(@model_type)
         options.success(@backbone_adapter.nativeToAttributes(docs[0]))
 
