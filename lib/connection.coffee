@@ -44,7 +44,10 @@ module.exports = class Connection
 
     queue.defer (callback) =>
       if url_parts.user
-        @client.authenticate(url_parts.user, url_parts.password, callback)
+        @client.authenticate url_parts.user, url_parts.password, (err) =>
+          console.log "Failed to authenticate user: #{url_parts.user} on #{url_parts.host}:#{url_parts.port}/#{url_parts.database}"if err
+          callback(err)
+
       else
         callback()
 
