@@ -72,6 +72,7 @@ module.exports = class Connection
 
     queue.await (err) =>
       if err
+        console.log "Backbone-Mongo: connection failed: #{err}"
         @failed_connection = true
         collection_requests = _.clone(@collection_requests); @collection_requests = []
         request(new Error("Connection failed")) for request in collection_requests
