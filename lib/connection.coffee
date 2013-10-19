@@ -33,7 +33,7 @@ module.exports = class Connection
     url_parts = Utils.parseUrl(@url)
 
     # console.log "MongoDB for '#{url_parts.table}' is: '#{url_parts.host}:#{url_parts.port}/#{url_parts.database}'"
-    @client = new mongodb.Db(url_parts.database, new mongodb.Server(url_parts.host, url_parts.port, {}), {safe: true})
+    @client = new mongodb.Db(url_parts.database, new mongodb.Server(url_parts.host, url_parts.port, {}), {auto_reconnect: true})
 
     queue = Queue(1)
     queue.defer (callback) =>
