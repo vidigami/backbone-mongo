@@ -8,6 +8,7 @@ Utils = require 'backbone-orm/lib/utils'
 # two minutes
 RETRY_COUNT = 120
 RETRY_INTERVAL = 1000
+DEFAULT_SERVER_OPTIONS = {auto_reconnect: true, poolSize: 100, safe: true}
 
 connectionRetry = (retry_count, name, fn, callback) ->
   attempt_count = 0
@@ -33,7 +34,7 @@ module.exports = class Connection
     url_parts = Utils.parseUrl(@url)
 
     # console.log "MongoDB for '#{url_parts.table}' is: '#{url_parts.host}:#{url_parts.port}/#{url_parts.database}'"
-    @client = new mongodb.Db(url_parts.database, new mongodb.Server(url_parts.host, url_parts.port, {}), {auto_reconnect: true, safe: true})
+    @client = new mongodb.Db(url_parts.database, new mongodb.Server(url_parts.host, url_parts.port, {}), DEFAULT_SERVER_OPTIONS)
 
     queue = Queue(1)
     queue.defer (callback) =>
