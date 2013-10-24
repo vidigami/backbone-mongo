@@ -38,14 +38,12 @@ module.exports = class Connection
       @db.collection collection_name, (err, collection) =>
         return callback(err) if err
 
-        for key, field of @schema.fields
-          @ensureIndex(collection, key, collection_name) if field.indexed
-
+        # ensure indexes
+        @ensureIndex(collection, key, collection_name) for key, field of @schema.fields when field.indexed
         for key, relation of @schema.relations
-          if relation.type is 'belongsTo' and not relation.isVirtual() and not relation.isEmbedded()
-            @ensureIndex(collection, relation.foreign_key, collection_name)
+          @ensureIndex(collection, relation.foreign_key, collection_name) if relation.type is 'belongsTo' and not relation.isVirtual() and not relation.isEmbedded()
 
-        # deal with waiting requests
+        # handle waiting requests
         collection_requests = _.clone(@collection_requests); @collection_requests = []
         @_collection = collection
         request(null, @_collection) for request in collection_requests
