@@ -10,6 +10,7 @@ ReadPreference = require('mongodb').ReadPreference
 
 RETRY_INTERVAL = 1000
 RETRY_COUNT = 2*60 # retry every second for two minutes
+DEFAULT_POOL_SIZE = 100
 
 DEFAULT_CLIENT_OPTIONS =
   retryMiliSeconds: RETRY_INTERVAL
@@ -26,14 +27,23 @@ module.exports = class Connection
     @db = null
     url_parts = URL.parse(@url)
     collection_name = url_parts.pathname.split('/')[1]
+    delete url_parts.search
+    url_parts.query or= {}
+    url_parts.query.maxPoolSize = DEFAULT_POOL_SIZE unless url_parts.query.hasOwnProperty('maxPoolSize')
+    url_parts.query.autoReconnect = true unless url_parts.query.hasOwnProperty('autoReconnect')
+    @url = URL.format(url_parts)
 
     queue = Queue(1)
+
+    # use pooled connection or create new
     queue.defer (callback) =>
       return callback() if @db = ConnectionPool.get(@url)
       MongoClient.connect @url, DEFAULT_CLIENT_OPTIONS, (err, db) =>
         return callback(err) if err
         ConnectionPool.set(@url, @db = db) # share the connection
         callback()
+
+    # connect to the collection
     queue.defer (callback) =>
       @db.collection collection_name, (err, collection) =>
         return callback(err) if err
@@ -49,6 +59,7 @@ module.exports = class Connection
         request(null, @_collection) for request in collection_requests
         callback()
 
+    # process awaiting requests
     queue.await (err) =>
       if err
         console.log "Backbone-Mongo: connection to failed: #{err}"
