@@ -1,10 +1,12 @@
 util = require 'util'
+URL = require 'url'
 _ = require 'underscore'
 Queue = require 'queue-async'
+
+ConnectionPool = require 'backbone-orm/lib/connection_pool'
+
 MongoClient = require('mongodb').MongoClient
 ReadPreference = require('mongodb').ReadPreference
-
-Utils = require 'backbone-orm/lib/utils'
 
 RETRY_INTERVAL = 1000
 RETRY_COUNT = 2*60 # retry every second for two minutes
@@ -22,21 +24,26 @@ module.exports = class Connection
 
     @collection_requests = []
     @db = null
-    url_parts = Utils.parseUrl(@url)
-    @table = url_parts.table
+    url_parts = URL.parse(@url)
+    collection_name = url_parts.pathname.split('/')[1]
 
     queue = Queue(1)
-    queue.defer (callback) => MongoClient.connect @url, DEFAULT_CLIENT_OPTIONS, (err, db) => callback(err, @db = db)
     queue.defer (callback) =>
-      @db.collection @table, (err, collection) =>
+      return callback() if @db = ConnectionPool.get(@url)
+      MongoClient.connect @url, DEFAULT_CLIENT_OPTIONS, (err, db) =>
+        return callback(err) if err
+        ConnectionPool.set(@url, @db = db) # share the connection
+        callback()
+    queue.defer (callback) =>
+      @db.collection collection_name, (err, collection) =>
         return callback(err) if err
 
         for key, field of @schema.fields
-          @ensureIndex(collection, key, @table) if field.indexed
+          @ensureIndex(collection, key, collection_name) if field.indexed
 
         for key, relation of @schema.relations
           if relation.type is 'belongsTo' and not relation.isVirtual() and not relation.isEmbedded()
-            @ensureIndex(collection, relation.foreign_key, @table)
+            @ensureIndex(collection, relation.foreign_key, collection_name)
 
         # deal with waiting requests
         collection_requests = _.clone(@collection_requests); @collection_requests = []
@@ -46,7 +53,7 @@ module.exports = class Connection
 
     queue.await (err) =>
       if err
-        console.log "Backbone-Mongo: connection failed: #{err}"
+        console.log "Backbone-Mongo: connection to failed: #{err}"
         @failed_connection = true
         collection_requests = _.clone(@collection_requests); @collection_requests = []
         request(new Error('Connection failed')) for request in collection_requests
