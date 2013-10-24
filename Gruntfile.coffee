@@ -19,7 +19,7 @@ module.exports = (grunt) ->
     coffee:
       map:
         options:
-          sourceMap: true
+          sourceMap: false
         expand: true
         src: ['**/*.coffee', '!_build/**/*', '!node_modules/eco/**/*']
         dest: '_build'

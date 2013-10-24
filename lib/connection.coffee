@@ -29,7 +29,7 @@ module.exports = class Connection
     collection_name = url_parts.pathname.split('/')[1]
     delete url_parts.search
     url_parts.query or= {}
-    url_parts.query.maxPoolSize = DEFAULT_POOL_SIZE unless url_parts.query.hasOwnProperty('maxPoolSize')
+    # url_parts.query.maxPoolSize = DEFAULT_POOL_SIZE unless url_parts.query.hasOwnProperty('maxPoolSize')
     url_parts.query.autoReconnect = true unless url_parts.query.hasOwnProperty('autoReconnect')
     @url = URL.format(url_parts)
 
@@ -62,7 +62,7 @@ module.exports = class Connection
     # process awaiting requests
     queue.await (err) =>
       if err
-        console.log "Backbone-Mongo: connection to failed: #{err}"
+        console.log "Backbone-Mongo: unable to create connection. Error: #{err}"
         @failed_connection = true
         collection_requests = _.clone(@collection_requests); @collection_requests = []
         request(new Error('Connection failed')) for request in collection_requests
