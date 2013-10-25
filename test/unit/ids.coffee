@@ -4,10 +4,11 @@ _ = require 'underscore'
 Backbone = require 'backbone'
 Queue = require 'queue-async'
 
+ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 Utils = require 'backbone-orm/lib/utils'
 
 runTests = (options, cache, callback) ->
-  require('backbone-orm/lib/cache').configure(if cache then {max: 100} else null) # configure caching
+  ModelCache.configure(if cache then {max: 100} else null) # configure caching
 
   class IndexedModel extends Backbone.Model
     @schema:
