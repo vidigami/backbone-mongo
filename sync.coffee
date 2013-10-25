@@ -15,7 +15,7 @@ DESTROY_BATCH_LIMIT = 1000
 
 module.exports = class MongoSync
 
-  constructor: (@model_type) ->
+  constructor: (@model_type, @sync_options) ->
     @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
     @schema = new Schema(@model_type)
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
@@ -135,7 +135,7 @@ module.exports = class MongoSync
   connect: (url) ->
     return if @connection and @connection.url is url
     @connection.destroy() if @connection
-    @connection = new Connection(url, @schema)
+    @connection = new Connection(url, @schema, @sync_options.connection_options or {})
 
   collection: (callback) -> @connection.collection(callback)
 
@@ -153,12 +153,12 @@ module.exports = class MongoSync
     return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
 
 
-module.exports = (type) ->
+module.exports = (type, sync_options={}) ->
   if Utils.isCollection(new type()) # collection
     model_type = Utils.configureCollectionModelType(type, module.exports)
     return type::sync = model_type::sync
 
-  sync = new MongoSync(type)
+  sync = new MongoSync(type, sync_options)
   type::sync = sync_fn = (method, model, options={}) -> # save for access by model extensions
     sync.initialize()
     return module.exports.apply(null, Array::slice.call(arguments, 1)) if method is 'createSync' # create a new sync

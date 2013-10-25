@@ -1,42 +1,34 @@
 util = require 'util'
-URL = require 'url'
 _ = require 'underscore'
 Queue = require 'queue-async'
 
+DatabaseUrl = require 'backbone-orm/lib/database_url'
 ConnectionPool = require 'backbone-orm/lib/connection_pool'
 
 MongoClient = require('mongodb').MongoClient
-ReadPreference = require('mongodb').ReadPreference
 
-RETRY_INTERVAL = 1000
-RETRY_COUNT = 2*60 # retry every second for two minutes
-DEFAULT_POOL_SIZE = 100
-
-DEFAULT_CLIENT_OPTIONS =
-  retryMiliSeconds: RETRY_INTERVAL
-  numberOfRetries: RETRY_COUNT
-  journal: false
-  readPreference: ReadPreference.NEAREST
+QUERY_OPTIONS = ['autoReconnect', 'maxPoolSize']
 
 module.exports = class Connection
+  @options = {}
 
-  constructor: (@url, @schema={}) ->
+  constructor: (@url, @schema={}, options={}) ->
     throw new Error 'Expecting a string url' unless _.isString(@url)
+    connection_options = _.extend(_.clone(Connection.options), options)
 
     @collection_requests = []
     @db = null
-    url_parts = URL.parse(@url, true)
+    database_url = new DatabaseUrl(@url, true)
+    collection_name = database_url.table
 
-    # strip off the collection
-    path_parts = url_parts.pathname.split('/')
-    collection_name = path_parts.pop(); url_parts.pathname = path_parts.join('/')
+    # configure query options and regenerate URL
+    database_url.query or= {}; delete database_url.search
+    for key in QUERY_OPTIONS
+      (database_url.query[key] = connection_options[key]; delete connection_options[key]) if connection_options.hasOwnProperty(key)
+    @url = database_url.format({exclude_table: true})
 
-    # configure using search
-    delete url_parts.search
-    url_parts.query or= {}
-    # url_parts.query.maxPoolSize = DEFAULT_POOL_SIZE unless url_parts.query.hasOwnProperty('maxPoolSize')
-    url_parts.query.autoReconnect = true unless url_parts.query.hasOwnProperty('autoReconnect')
-    @url = URL.format(url_parts)
+    console.log @url
+    console.log connection_options
 
     queue = Queue(1)
 
@@ -44,7 +36,7 @@ module.exports = class Connection
     queue.defer (callback) =>
       return callback() if @db = ConnectionPool.get(@url)
 
-      MongoClient.connect @url, DEFAULT_CLIENT_OPTIONS, (err, db) =>
+      MongoClient.connect @url, connection_options, (err, db) =>
         return callback(err) if err
 
         # it may have already been connected to asynchronously, release new
