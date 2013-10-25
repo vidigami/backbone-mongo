@@ -27,9 +27,6 @@ module.exports = class Connection
       (database_url.query[key] = connection_options[key]; delete connection_options[key]) if connection_options.hasOwnProperty(key)
     @url = database_url.format({exclude_table: true})
 
-    console.log @url
-    console.log connection_options
-
     queue = Queue(1)
 
     # use pooled connection or create new
