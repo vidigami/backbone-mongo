@@ -35,7 +35,7 @@ module.exports = class Connection
     delete url_parts.search
     url_parts.query or= {}
     # url_parts.query.maxPoolSize = DEFAULT_POOL_SIZE unless url_parts.query.hasOwnProperty('maxPoolSize')
-    # url_parts.query.autoReconnect = true unless url_parts.query.hasOwnProperty('autoReconnect')
+    url_parts.query.autoReconnect = true unless url_parts.query.hasOwnProperty('autoReconnect')
     @url = URL.format(url_parts)
 
     queue = Queue(1)
