@@ -2,7 +2,7 @@ util = require 'util'
 _ = require 'underscore'
 Queue = require 'queue-async'
 
-MemoryCursor = require 'backbone-orm/lib/memory_cursor'
+MemoryCursor = require 'backbone-orm/lib/memory/cursor'
 
 _sortArgsToMongo = (args) ->
   args = if _.isArray(args) then args else [args]

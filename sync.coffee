@@ -8,7 +8,8 @@ MongoCursor = require './lib/mongo_cursor'
 Schema = require 'backbone-orm/lib/schema'
 Connection = require './lib/connection'
 Utils = require 'backbone-orm/lib/utils'
-QueryCache = require 'backbone-orm/lib/query_cache'
+QueryCache = require('backbone-orm/lib/cache/singletons').QueryCache
+ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 bbCallback = Utils.bbCallback
 
 DESTROY_BATCH_LIMIT = 1000
@@ -167,5 +168,5 @@ module.exports = (type, sync_options={}) ->
     return false if method is 'isRemote'
     return if sync[method] then sync[method].apply(sync, Array::slice.call(arguments, 1)) else undefined
 
-  require('backbone-orm/lib/model_extensions')(type) # mixin extensions
-  return require('backbone-orm/lib/cache').configureSync(type, sync_fn)
+  require('backbone-orm/lib/extensions/model')(type) # mixin extensions
+  return ModelCache.configureSync(type, sync_fn)
