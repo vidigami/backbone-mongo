@@ -25,7 +25,7 @@ module.exports = class Connection
 
     @collection_requests = []
     @db = null
-    url_parts = URL.parse(@url)
+    url_parts = URL.parse(@url, true)
 
     # strip off the collection
     path_parts = url_parts.pathname.split('/')
