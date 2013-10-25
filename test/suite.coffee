@@ -1,7 +1,6 @@
 Queue = require 'queue-async'
 
 option_sets = require('backbone-orm/test/option_sets')
-option_sets = [option_sets[0]]
 
 test_queue = new Queue(1)
 for options in option_sets
