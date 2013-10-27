@@ -30,7 +30,7 @@ module.exports = class Connection
     (database_url.query[key] = connection_options[key]; delete connection_options[key]) for key in CONNECTION_QUERIES when connection_options.hasOwnProperty(key)
     @url = database_url.format({exclude_table: true})
 
-    queue = Queue(1)
+    queue = new Queue(1)
 
     # use pooled connection or create new
     queue.defer (callback) =>

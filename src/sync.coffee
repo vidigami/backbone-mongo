@@ -148,8 +148,8 @@ module.exports = class MongoSync
       for info in field_info
         if info.manual_id
           @manual_id = true
-          return require './lib/document_adapter_no_mongo_id'
-    return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
+          return require './document_adapter_no_mongo_id'
+    return require './document_adapter_mongo_id' # default is using the mongodb's ids
 
 
 module.exports = (type, sync_options={}) ->
