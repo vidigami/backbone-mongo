@@ -2,15 +2,16 @@ util = require 'util'
 _ = require 'underscore'
 Backbone = require 'backbone'
 moment = require 'moment'
-Queue = require 'backbone-orm/lib/queue'
 
-MongoCursor = require './lib/mongo_cursor'
+Queue = require 'backbone-orm/lib/queue'
 Schema = require 'backbone-orm/lib/schema'
-Connection = require './lib/connection'
 Utils = require 'backbone-orm/lib/utils'
 QueryCache = require('backbone-orm/lib/cache/singletons').QueryCache
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 bbCallback = Utils.bbCallback
+
+MongoCursor = require './cursor'
+Connection = require './connection'
 
 DESTROY_BATCH_LIMIT = 1000
 

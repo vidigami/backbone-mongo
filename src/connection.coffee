@@ -1,4 +1,3 @@
-util = require 'util'
 _ = require 'underscore'
 Queue = require 'backbone-orm/lib/queue'
 

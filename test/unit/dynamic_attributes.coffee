@@ -12,7 +12,7 @@ module.exports = (options, callback) ->
 
   class MongoModel extends Backbone.Model
     url: "#{require('../config/database')['test']}/mongo_model"
-    sync: require('../../sync')(MongoModel)
+    sync: require('../../src/sync')(MongoModel)
 
   describe 'Dynamic Attributes Functionality', ->
 
