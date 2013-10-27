@@ -7,8 +7,8 @@ Queue = require 'queue-async'
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 Utils = require 'backbone-orm/lib/utils'
 
-runTests = (options, cache, callback) ->
-  ModelCache.configure(if cache then {max: 100} else null) # configure caching
+module.exports = (options, callback) ->
+  ModelCache.configure(if options.cache then {max: 100} else null) # configure caching
 
   class MongoModel extends Backbone.Model
     url: "#{require('../config/database')['test']}/mongo_model"
@@ -32,7 +32,7 @@ runTests = (options, cache, callback) ->
             # unset and confirm different instances
             model.unset('type')
             assert.ok(_.isUndefined(model.get('type')), "Attribute was unset")
-            if cache
+            if options.cache
               assert.deepEqual(model.toJSON(), saved_model.toJSON(), "2 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
             else
               assert.notDeepEqual(model.toJSON(), saved_model.toJSON(), "2 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
@@ -50,7 +50,7 @@ runTests = (options, cache, callback) ->
                 # try resetting
                 model.set({type: 'dynamic'})
                 assert.ok(!_.isUndefined(model.get('type')), "Attribute was set")
-                if cache
+                if options.cache
                   assert.deepEqual(model.toJSON(), saved_model.toJSON(), "4 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
                 else
                   assert.notDeepEqual(model.toJSON(), saved_model.toJSON(), "4 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
@@ -66,9 +66,3 @@ runTests = (options, cache, callback) ->
                     assert.deepEqual(model.toJSON(), saved_model.toJSON(), "5 Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
 
                     done()
-
-module.exports = (options, callback) ->
-  queue = new Queue(1)
-  queue.defer (callback) -> runTests(options, false, callback)
-  queue.defer (callback) -> runTests(options, true, callback)
-  queue.await callback

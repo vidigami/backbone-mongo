@@ -7,8 +7,8 @@ Queue = require 'queue-async'
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 Utils = require 'backbone-orm/lib/utils'
 
-runTests = (options, cache, callback) ->
-  ModelCache.configure(if cache then {max: 100} else null) # configure caching
+module.exports = (options, callback) ->
+  ModelCache.configure(if options.cache then {max: 100} else null) # configure caching
 
   class IndexedModel extends Backbone.Model
     @schema:
@@ -73,9 +73,3 @@ runTests = (options, cache, callback) ->
           model.save {id: null}, Utils.bbCallback (err) ->
             assert.ok(err, 'should not save if missing an id')
             done()
-
-module.exports = (options, callback) ->
-  queue = new Queue(1)
-  queue.defer (callback) -> runTests(options, false, callback)
-  queue.defer (callback) -> runTests(options, true, callback)
-  queue.await callback
