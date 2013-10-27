@@ -4,10 +4,9 @@ Queue = require 'queue-async'
 
 DatabaseUrl = require 'backbone-orm/lib/database_url'
 ConnectionPool = require 'backbone-orm/lib/connection_pool'
+CONNECTION_QUERIES = require './connection_queries'
 
 MongoClient = require('mongodb').MongoClient
-
-QUERY_OPTIONS = ['autoReconnect', 'maxPoolSize']
 
 module.exports = class Connection
   @options = {}
@@ -23,8 +22,13 @@ module.exports = class Connection
 
     # configure query options and regenerate URL
     database_url.query or= {}; delete database_url.search
-    for key in QUERY_OPTIONS
-      (database_url.query[key] = connection_options[key]; delete connection_options[key]) if connection_options.hasOwnProperty(key)
+
+    # allow for non-url options to be specified on the url (for example, journal)
+    connection_options[key] = value for key, value of database_url.query
+    database_url.query = {}
+
+    # transfer options to the url
+    (database_url.query[key] = connection_options[key]; delete connection_options[key]) for key in CONNECTION_QUERIES when connection_options.hasOwnProperty(key)
     @url = database_url.format({exclude_table: true})
 
     queue = Queue(1)
