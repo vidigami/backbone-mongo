@@ -1,6 +1,6 @@
 util = require 'util'
 _ = require 'underscore'
-Queue = require 'queue-async'
+Queue = require 'backbone-orm/lib/queue'
 
 MemoryCursor = require 'backbone-orm/lib/memory/cursor'
 

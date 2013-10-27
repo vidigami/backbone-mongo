@@ -1,9 +1,9 @@
-Queue = require 'queue-async'
+Queue = require 'backbone-orm/lib/queue'
 
 require '../index'
 
 option_sets = require('backbone-orm/test/option_sets')
-option_sets = option_sets.slice(0, 1)
+option_sets = option_sets.slice(0, 5)
 
 test_queue = new Queue(1)
 for options in option_sets

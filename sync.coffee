@@ -2,7 +2,7 @@ util = require 'util'
 _ = require 'underscore'
 Backbone = require 'backbone'
 moment = require 'moment'
-Queue = require 'queue-async'
+Queue = require 'backbone-orm/lib/queue'
 
 MongoCursor = require './lib/mongo_cursor'
 Schema = require 'backbone-orm/lib/schema'

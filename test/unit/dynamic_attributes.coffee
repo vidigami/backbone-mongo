@@ -2,7 +2,7 @@ util = require 'util'
 assert = require 'assert'
 _ = require 'underscore'
 Backbone = require 'backbone'
-Queue = require 'queue-async'
+Queue = require 'backbone-orm/lib/queue'
 
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 Utils = require 'backbone-orm/lib/utils'

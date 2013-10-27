@@ -1,6 +1,6 @@
 util = require 'util'
 _ = require 'underscore'
-Queue = require 'queue-async'
+Queue = require 'backbone-orm/lib/queue'
 
 DatabaseUrl = require 'backbone-orm/lib/database_url'
 ConnectionPool = require 'backbone-orm/lib/connection_pool'
