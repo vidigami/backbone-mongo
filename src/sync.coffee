@@ -56,48 +56,53 @@ module.exports = class MongoSync
 
   create: (model, options) ->
     return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
-
-    @connection.collection (err, collection) =>
+    QueryCache.reset @model_type, (err) =>
       return options.error(err) if err
-      return options.error(new Error('new document has a non-empty revision')) if model.get('_rev')
-      doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
-      collection.insert doc, (err, docs) =>
-        return options.error(new Error("Failed to create model. Error: #{err or 'document not found'}")) if err or not docs or docs.length isnt 1
-        QueryCache.reset @model_type, (err) => if err then options.error(err) else options.success(@backbone_adapter.nativeToAttributes(docs[0]))
+      @connection.collection (err, collection) =>
+        return options.error(err) if err
+        return options.error(new Error('new document has a non-empty revision')) if model.get('_rev')
+        doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
+        collection.insert doc, (err, docs) =>
+          return options.error(new Error("Failed to create model. Error: #{err or 'document not found'}")) if err or not docs or docs.length isnt 1
+          options.success(@backbone_adapter.nativeToAttributes(docs[0]))
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
     return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
-
-    @connection.collection (err, collection) =>
+    QueryCache.reset @model_type, (err) =>
       return options.error(err) if err
+      @connection.collection (err, collection) =>
+        return options.error(err) if err
 
-      json = @backbone_adapter.attributesToNative(model.toJSON())
-      delete json._id if @backbone_adapter.id_attribute is '_id'
-      find_query = @backbone_adapter.modelFindQuery(model)
-      find_query._rev = json._rev
-      json._rev++ # increment revisions
+        json = @backbone_adapter.attributesToNative(model.toJSON())
+        delete json._id if @backbone_adapter.id_attribute is '_id'
+        find_query = @backbone_adapter.modelFindQuery(model)
+        find_query._rev = json._rev
+        json._rev++ # increment revisions
 
-      modifications = {$set: json}
-      if changes = model.changedAttributes() # look for unset things
-        keys_to_delete = []
-        keys_to_delete.push(key) for key, value of changes when _.isUndefined(value)
-        if keys_to_delete.length
-          modifications.$unset = {}
-          modifications.$unset[key] = '' for key in keys_to_delete
+        modifications = {$set: json}
+        if changes = model.changedAttributes() # look for unset things
+          keys_to_delete = []
+          keys_to_delete.push(key) for key, value of changes when _.isUndefined(value)
+          if keys_to_delete.length
+            modifications.$unset = {}
+            modifications.$unset[key] = '' for key in keys_to_delete
 
-      # update the record
-      collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
-        return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
-        return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
-        QueryCache.reset @model_type, (err) => if err then options.error(err) else options.success(@backbone_adapter.nativeToAttributes(doc))
+        # update the record
+        collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
+          console.log 'error updating: ', json if err or not doc
+          return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
+          return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
+          options.success(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
-    @connection.collection (err, collection) =>
+    QueryCache.reset @model_type, (err) =>
       return options.error(err) if err
-      collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
+      @connection.collection (err, collection) =>
         return options.error(err) if err
-        QueryCache.reset @model_type, (err) => if err then options.error(err) else options.success()
+        collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
+          return options.error(err) if err
+          options.success()
 
   ###################################
   # Backbone ORM - Class Extensions
@@ -127,14 +132,16 @@ module.exports = class MongoSync
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
   destroy: (query, callback) ->
-    @connection.collection (err, collection) =>
+    QueryCache.reset @model_type, (err) =>
       return callback(err) if err
-      @model_type.batch query, {$limit: DESTROY_BATCH_LIMIT, method: 'toJSON'}, callback, (model_json, callback) =>
-        Utils.patchRemoveByJSON @model_type, model_json, (err) =>
-          return callback(err) if err
-          collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
+      @connection.collection (err, collection) =>
+        return callback(err) if err
+        @model_type.batch query, {$limit: DESTROY_BATCH_LIMIT, method: 'toJSON'}, callback, (model_json, callback) =>
+          Utils.patchRemoveByJSON @model_type, model_json, (err) =>
             return callback(err) if err
-            QueryCache.reset @model_type, callback
+            collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
+              return callback(err) if err
+              callback()
 
   ###################################
   # Backbone Mongo - Extensions
