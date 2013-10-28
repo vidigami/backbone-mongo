@@ -14,6 +14,7 @@ Schema = require 'backbone-orm/lib/schema'
 Utils = require 'backbone-orm/lib/utils'
 QueryCache = require('backbone-orm/lib/cache/singletons').QueryCache
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
+ModelTypeID = require('backbone-orm/lib/cache/singletons').ModelTypeID
 bbCallback = Utils.bbCallback
 
 MongoCursor = require './cursor'
@@ -25,6 +26,7 @@ module.exports = class MongoSync
 
   constructor: (@model_type, @sync_options) ->
     @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
+    @model_type.model_id = ModelTypeID.generate(@model_type)
     @schema = new Schema(@model_type)
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
