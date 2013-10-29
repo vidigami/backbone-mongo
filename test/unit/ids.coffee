@@ -13,13 +13,13 @@ module.exports = (options, callback) ->
     @schema:
       _id: [indexed: true]
     url: "#{require('../config/database')['test']}/indexed_models"
-    sync: require('../../src/sync')(IndexedModel)
+    sync: require('../../lib/sync')(IndexedModel)
 
   class ManualIdModel extends Backbone.Model
     @schema:
       id: [indexed: true, manual_id: true]
     url: "#{require('../config/database')['test']}/indexed_models"
-    sync: require('../../src/sync')(ManualIdModel)
+    sync: require('../../lib/sync')(ManualIdModel)
 
 
   describe 'ID Functionality', ->
