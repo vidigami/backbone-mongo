@@ -15,7 +15,6 @@ Utils = require 'backbone-orm/lib/utils'
 QueryCache = require('backbone-orm/lib/cache/singletons').QueryCache
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 ModelTypeID = require('backbone-orm/lib/cache/singletons').ModelTypeID
-bbCallback = Utils.bbCallback
 
 MongoCursor = require './cursor'
 Connection = require './connection'

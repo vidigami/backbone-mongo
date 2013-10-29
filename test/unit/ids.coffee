@@ -56,20 +56,20 @@ module.exports = (options, callback) ->
     describe 'manual_id', ->
       it 'should fail to save if you do not provide an id', (done) ->
         model = new ManualIdModel({name: 'Bob'})
-        model.save {}, Utils.bbCallback (err) ->
+        model.save (err) ->
           assert.ok(err, 'should not save if missing an id')
           done()
 
       it 'should save if provide an id', (done) ->
         model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
-        model.save {}, Utils.bbCallback (err) ->
+        model.save (err) ->
           assert.ok(!err, "No errors: #{err}")
           done()
 
       it 'should fail to save if you delete the id after saving', (done) ->
         model = new ManualIdModel({id: _.uniqueId(), name: 'Bob'})
-        model.save {}, Utils.bbCallback (err) ->
+        model.save (err) ->
           assert.ok(!err, "No errors: #{err}")
-          model.save {id: null}, Utils.bbCallback (err) ->
+          model.save {id: null}, (err) ->
             assert.ok(err, 'should not save if missing an id')
             done()

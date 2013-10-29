@@ -21,7 +21,7 @@ module.exports = (options, callback) ->
     describe 'unset', ->
       it 'should unset an attribute', (done) ->
         model = new MongoModel({name: 'Bob', type: 'thing'})
-        model.save {}, Utils.bbCallback (err) ->
+        model.save (err) ->
           assert.ok(!err, "No errors: #{err}")
 
           MongoModel.findOne model.id, (err, saved_model) ->
@@ -36,7 +36,7 @@ module.exports = (options, callback) ->
               assert.deepEqual(model.toJSON(), saved_model.toJSON(), "2 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
             else
               assert.notDeepEqual(model.toJSON(), saved_model.toJSON(), "2 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
-            model.save {}, Utils.bbCallback (err) ->
+            model.save (err) ->
               assert.ok(!err, "No errors: #{err}")
               assert.ok(_.isUndefined(model.get('type')), "Attribute is still unset")
 
@@ -54,7 +54,7 @@ module.exports = (options, callback) ->
                   assert.deepEqual(model.toJSON(), saved_model.toJSON(), "4 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
                 else
                   assert.notDeepEqual(model.toJSON(), saved_model.toJSON(), "4 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
-                model.save {}, Utils.bbCallback (err) ->
+                model.save (err) ->
                   assert.ok(!err, "No errors: #{err}")
                   assert.ok(!_.isUndefined(model.get('type')), "Attribute is still set")
 
