@@ -5,7 +5,6 @@ Backbone = require 'backbone'
 Queue = require 'backbone-orm/lib/queue'
 
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
-Utils = require 'backbone-orm/lib/utils'
 
 module.exports = (options, callback) ->
   ModelCache.configure(if options.cache then {max: 100} else null) # configure caching
