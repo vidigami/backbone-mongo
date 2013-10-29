@@ -90,7 +90,6 @@ module.exports = class MongoSync
 
         # update the record
         collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
-          console.log 'error updating: ', json if err or not doc
           return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
           return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
           options.success(@backbone_adapter.nativeToAttributes(doc))
