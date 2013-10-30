@@ -33,7 +33,7 @@ module.exports = class MongoSync
     return if @is_initialized; @is_initialized = true
 
     @schema.initialize()
-    throw new Error("Missing url for model") unless url = _.result(@model_type.prototype, 'url')
+    throw new Error "Missing url for model" unless url = _.result(@model_type.prototype, 'url')
     @connect(url)
 
   ###################################
@@ -54,20 +54,20 @@ module.exports = class MongoSync
         options.success(json)
 
   create: (model, options) ->
-    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
+    return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
     QueryCache.reset @model_type, (err) =>
       return options.error(err) if err
       @connection.collection (err, collection) =>
         return options.error(err) if err
-        return options.error(new Error('new document has a non-empty revision')) if model.get('_rev')
+        return options.error(new Error 'New document has a non-empty revision') if model.get('_rev')
         doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
         collection.insert doc, (err, docs) =>
-          return options.error(new Error("Failed to create model. Error: #{err or 'document not found'}")) if err or not docs or docs.length isnt 1
+          return options.error(new Error "Failed to create model. Error: #{err or 'document not found'}") if err or not docs or docs.length isnt 1
           options.success(@backbone_adapter.nativeToAttributes(docs[0]))
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
-    return options.error(new Error("Missing manual id for create: #{util.inspect(model.attributes)}")) if @manual_id and not model.id
+    return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
     QueryCache.reset @model_type, (err) =>
       return options.error(err) if err
       @connection.collection (err, collection) =>
@@ -89,8 +89,9 @@ module.exports = class MongoSync
 
         # update the record
         collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
-          return options.error(new Error("Failed to update model. Doc: #{!!doc}. Error: #{err}")) if err or not doc
-          return options.error(new Error("Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}")) if doc._rev isnt json._rev
+          return options.error(new Error "Failed to update model. Error: #{err}") if err
+          return options.error(new Error "Failed to update model. Either the document has been deleted or the revision (_rev) was stale.") unless doc
+          return options.error(new Error "Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}") if doc._rev isnt json._rev
           options.success(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
