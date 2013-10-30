@@ -134,12 +134,14 @@ module.exports = class MongoSync
       return callback(err) if err
       @connection.collection (err, collection) =>
         return callback(err) if err
-        @model_type.batch query, {$limit: DESTROY_BATCH_LIMIT, method: 'toJSON'}, callback, (model_json, callback) =>
-          Utils.patchRemoveByJSON @model_type, model_json, (err) =>
-            return callback(err) if err
-            collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
+        @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query),
+          ((model_json, callback) =>
+            Utils.patchRemoveByJSON @model_type, model_json, (err) =>
               return callback(err) if err
-              callback()
+              collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
+                return callback(err) if err
+                callback()
+          ), callback
 
   ###################################
   # Backbone Mongo - Extensions
