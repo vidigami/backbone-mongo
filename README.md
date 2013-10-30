@@ -1,21 +1,19 @@
-Introduction
+[![Build Status](https://secure.travis-ci.org/vidigami/backbone-mongo.png)](http://travis-ci.org/vidigami/backbone-mongo)
+
+![logo](https://github.com/vidigami/backbone-mongo/raw/master/media/logo.png)
+
+MongoDB storage for BackboneORM.
+
+Please [checkout the website](http://vidigami.github.io/backbone-orm/) for examples, documentation, and community!
+
+
+For Contributors
 ============
 
-A collection of Classes and Utilities for interfacing with MongoDB in Node.js using Backbone.js Models and Collections.
+To build the library for Node.js:
 
-Install
-=======
+  $ npm run build
 
-Install all npm modules:
-
-  $ cd backbone-mongo
-  $ npm install
-
-Test
-====
-
-Run the unit tests one time:
+Please run tests before submitting a pull request.
 
   $ npm test
-
-If you are running in file descriptor availability issues on Mac OSX: http://superuser.com/questions/261023/how-to-change-default-ulimit-values-in-mac-os-x-10-6
