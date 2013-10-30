@@ -1,5 +1,5 @@
 ###
-  backbone-mongo.js 0.0.1
+  backbone-mongo.js 0.5.0
   Copyright (c) 2013 Vidigami - https://github.com/vidigami/backbone-mongo
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
