@@ -7,7 +7,7 @@ Queue = require 'backbone-orm/lib/queue'
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 
 module.exports = (options, callback) ->
-  ModelCache.configure(if options.cache then {max: 100} else null) # configure caching
+  ModelCache.configure({enabled: !!options.cache, max: 100}) # configure caching
 
   class IndexedModel extends Backbone.Model
     @schema:

@@ -4,7 +4,7 @@ ModelTypeID = require('backbone-orm/lib/cache/singletons').ModelTypeID
 ModelTypeID.strict = false
 
 option_sets = require('backbone-orm/test/option_sets')
-option_sets = option_sets.slice(0, 5)
+option_sets = option_sets.slice(1, 2)
 
 test_queue = new Queue(1)
 for options in option_sets
