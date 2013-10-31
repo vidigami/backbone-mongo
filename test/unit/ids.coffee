@@ -10,13 +10,13 @@ module.exports = (options, callback) ->
   ModelCache.configure({enabled: !!options.cache, max: 100}) # configure caching
 
   class IndexedModel extends Backbone.Model
-    @schema:
+    schema:
       _id: [indexed: true]
     url: "#{require('../config/database')['test']}/indexed_models"
     sync: require('../../lib/sync')(IndexedModel)
 
   class ManualIdModel extends Backbone.Model
-    @schema:
+    schema:
       id: [indexed: true, manual_id: true]
     url: "#{require('../config/database')['test']}/indexed_models"
     sync: require('../../lib/sync')(ManualIdModel)
