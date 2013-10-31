@@ -158,8 +158,7 @@ module.exports = class MongoSync
   # Internal
   ###################################
   _selectAdapter: ->
-    schema = _.result(@model_type, 'schema') or {}
-    for field_name, field_info of schema
+    for field_name, field_info of @schema.raw
       continue if (field_name isnt 'id') or not _.isArray(field_info)
       for info in field_info
         if info.manual_id
