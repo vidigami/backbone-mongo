@@ -1,5 +1,3 @@
-[![Build Status](https://secure.travis-ci.org/vidigami/backbone-mongo.png)](http://travis-ci.org/vidigami/backbone-mongo)
-
 ![logo](https://github.com/vidigami/backbone-mongo/raw/master/media/logo.png)
 
 MongoDB storage for BackboneORM.
