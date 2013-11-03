@@ -8,7 +8,7 @@ In addition, BackboneMongo using CouchDB-style '_rev' versioning to ensure coher
 
 #### Examples (CoffeeScript)
 
-```
+```coffeescript
 class Change extends Backbone.Model
   model_name: 'Change'
   sync: require('backbone-orm').sync(Change)
@@ -30,7 +30,7 @@ class Project extends Backbone.Model
 
 #### Examples (JavaScript)
 
-```
+```javascript
 var Change = Backbone.Model.extend({
   model_name: 'Change',
 });
@@ -62,8 +62,12 @@ Please [checkout the website](http://vidigami.github.io/backbone-orm/backbone-mo
 
 To build the library for Node.js:
 
-  $ npm run build
+```
+$ npm run
+```
 
 Please run tests before submitting a pull request.
 
-  $ npm test
+```
+$ npm test
+```
