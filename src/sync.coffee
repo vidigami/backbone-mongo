@@ -21,7 +21,7 @@ Connection = require './connection'
 
 DESTROY_BATCH_LIMIT = 1000
 
-module.exports = class MongoSync
+class MongoSync
 
   constructor: (@model_type, @sync_options) ->
     @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
