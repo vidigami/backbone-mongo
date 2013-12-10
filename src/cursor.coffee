@@ -39,6 +39,8 @@ module.exports = class MongoCursor extends MemoryCursor
         delete args[0].id
         if id.$in
           args[0][@backbone_adapter.id_attribute] = {$in: _.map(id.$in, @backbone_adapter.findId)}
+        if id.$nin
+          args[0][@backbone_adapter.id_attribute] = {$nin: _.map(id.$nin, @backbone_adapter.findId)}
         else if id.$ne
           args[0][@backbone_adapter.id_attribute] = {$ne: @backbone_adapter.findId(id.$ne)}
         else
