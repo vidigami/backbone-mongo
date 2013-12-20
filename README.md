@@ -63,7 +63,7 @@ Please [checkout the website](http://vidigami.github.io/backbone-orm/backbone-mo
 To build the library for Node.js:
 
 ```
-$ npm run
+$ npm run build
 ```
 
 Please run tests before submitting a pull request.
