@@ -61,10 +61,10 @@ module.exports = class Connection
 
     # process awaiting requests
     queue.await (err) =>
-      collection_requests = _.clone(@collection_requests); @collection_requests = []
-      if @failed_connection = !!err
+      collection_requests = @collection_requests.splice(0, @collection_requests.length)
+      if @connection_error = err
         console.log "Backbone-Mongo: unable to create connection. Error: #{err}"
-        request(new Error 'Connection failed') for request in collection_requests
+        request(new Error("Connection failed. Error: #{err}")) for request in collection_requests
       else
         request(null, @_collection) for request in collection_requests
 
@@ -76,7 +76,7 @@ module.exports = class Connection
     @db.close(); @db = null
 
   collection: (callback) ->
-    return callback(new Error('Connection failed')) if @failed_connection
+    return callback(new Error("Connection failed. Error: #{@connection_error}")) if @connection_error
     return callback(null, @_collection) if @_collection
     @collection_requests.push(callback)
 
