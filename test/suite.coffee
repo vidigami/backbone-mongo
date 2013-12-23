@@ -16,4 +16,7 @@ for options in option_sets
     queue.defer (callback) -> require('./unit/ids')(options, callback)
     queue.defer (callback) -> require('./unit/dynamic_attributes')(options, callback)
     queue.await callback
+
+test_queue.defer (callback) -> require('./issues/issue3')({}, callback)
+
 test_queue.await (err) -> console.log 'Backbone Mongo: Completed tests'
