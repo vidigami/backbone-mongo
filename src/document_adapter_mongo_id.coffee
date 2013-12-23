@@ -11,9 +11,8 @@ module.exports = class DocumentAdapter_MongoId
 
   @id_attribute = '_id'
 
-  @findId: (id) -> return new ObjectID("#{id}")
-  @modelFindQuery: (model) -> return {_id: new ObjectID("#{model.id}")}
-
+  @findId: (id) -> try return new ObjectID("#{id}") catch err then console.log "BackboneMongo: invalid id: #{err}"; return null
+  @modelFindQuery: (model) -> try return {_id: new ObjectID("#{model.id}")} catch err then console.log "BackboneMongo: invalid id: #{err}"; return {_id: null}
   @nativeToAttributes: (doc) ->
     return {} unless doc
     if doc._id
