@@ -10,7 +10,7 @@
   "keywords": ["backbone", "orm", "backbone-orm", "mongo", "mongodb"],
   "engines": {"node": "*"},
   "scripts": {
-    "test": "npm run build; NODE_ENV=test mocha test/suite.coffee --compilers coffee:coffee-script --reporter spec --timeout 10000",
+    "test": "npm run build; NODE_ENV=test mocha test/suite.coffee --compilers coffee:coffee-script/register --reporter spec --timeout 10000",
     "build": "coffee -o lib -c src",
     "watch": "coffee -o lib -w src",
     "clean": "rm -rf lib/*",
@@ -32,8 +32,8 @@
     "underscore": "1.5.x",
     "backbone": "1.1.x",
     "backbone-orm": "0.5.x",
-    "moment": "2.4.x",
-    "inflection": "1.2.x",
-    "mongodb": "1.2.x"
+    "moment": "2.x.x",
+    "inflection": "1.x.x",
+    "mongodb": "1.3.x"
   }
 }

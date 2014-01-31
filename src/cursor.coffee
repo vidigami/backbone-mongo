@@ -80,19 +80,16 @@ module.exports = class MongoCursor extends MemoryCursor
 
           @fetchIncludes json, (err) =>
             return callback(err) if err
-            return callback(null, if json.length then json[0] else null) if @_cursor.$one
-
-            json = @selectResults(json)
             if @hasCursorQuery('$page')
               cursor.count (err, count) =>
                 return callback(err) if err
                 callback(null, {
                   offset: @_cursor.$offset or 0
                   total_rows: count
-                  rows: json
+                  rows: @selectResults(json)
                 })
             else
-              callback(null, json)
+              callback(null, @selectResults(json))
 
       @connection.collection (err, collection) =>
         return callback(err) if err
