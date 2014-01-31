@@ -2,6 +2,7 @@ Please refer to the following release notes when upgrading your version of Backb
 
 ### 0.5.2
 * Added handling of $one and $values
+* Added handling of all operators for ids
 
 ### 0.5.1
 * Added handling of $nin
