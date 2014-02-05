@@ -89,9 +89,9 @@ class MongoSync
 
         # update the record
         collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
-          return options.error(new Error "Failed to update model. Error: #{err}") if err
-          return options.error(new Error "Failed to update model. Either the document has been deleted or the revision (_rev) was stale.") unless doc
-          return options.error(new Error "Failed to update revision. Is: #{doc._rev} expecting: #{json._rev}") if doc._rev isnt json._rev
+          return options.error(new Error "Failed to update model (#{@model_type.model_name}). Error: #{err}") if err
+          return options.error(new Error "Failed to update model (#{@model_type.model_name}). Either the document has been deleted or the revision (_rev) was stale.") unless doc
+          return options.error(new Error "Failed to update revision (#{@model_type.model_name}). Is: #{doc._rev} expecting: #{json._rev}") if doc._rev isnt json._rev
           options.success(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
