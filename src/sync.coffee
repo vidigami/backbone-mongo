@@ -1,5 +1,5 @@
 ###
-  backbone-mongo.js 0.5.3
+  backbone-mongo.js 0.5.4
   Copyright (c) 2013 Vidigami - https://github.com/vidigami/backbone-mongo
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
@@ -33,7 +33,7 @@ class MongoSync
     return if @is_initialized; @is_initialized = true
 
     @schema.initialize()
-    throw new Error "Missing url for model" unless url = _.result(@model_type.prototype, 'url')
+    throw new Error "Missing url for model" unless url = _.result(new @model_type, 'url')
     @connect(url)
 
   ###################################
