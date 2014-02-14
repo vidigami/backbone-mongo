@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.5.3
+* Lock Backbone.js to 1.1.0 until new release compatibility issues fixed
+
 ### 0.5.2
 * Added handling of $one and $values
 * Added handling of all operators for ids
