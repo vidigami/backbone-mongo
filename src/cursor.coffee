@@ -1,5 +1,5 @@
 ###
-  backbone-mongo.js 0.5.4
+  backbone-mongo.js 0.5.5
   Copyright (c) 2013 Vidigami - https://github.com/vidigami/backbone-mongo
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
@@ -10,16 +10,13 @@ Queue = require 'backbone-orm/lib/queue'
 
 MemoryCursor = require 'backbone-orm/lib/memory/cursor'
 
-_sortArgsToMongo = (args) ->
+_sortArgsToMongo = (args, backbone_adapter) ->
   args = if _.isArray(args) then args else [args]
   sorters = {}
   for sort_part in args
-    sort_part = sort_part.trim()
-    if sort_part[0] is '-'
-      key = sort_part.substring(1).trim()
-      sorters[key] = -1
-    else
-      sorters[sort_part] = 1
+    key = sort_part.trim(); value = 1
+    (key = key.substring(1).trim(); value = -1) if key[0] is '-'
+    sorters[if key is 'id' then backbone_adapter.id_attribute else key] = value
   return sorters
 
 module.exports = class MongoCursor extends MemoryCursor
@@ -60,7 +57,7 @@ module.exports = class MongoCursor extends MemoryCursor
 
         if @_cursor.$sort
           @_cursor.$sort = [@_cursor.$sort] unless _.isArray(@_cursor.$sort)
-          cursor = cursor.sort(@backbone_adapter.attributesToNative(_sortArgsToMongo(@_cursor.$sort)))
+          cursor = cursor.sort(_sortArgsToMongo(@_cursor.$sort, @backbone_adapter))
 
         cursor = cursor.skip(@_cursor.$offset) if @_cursor.$offset
 

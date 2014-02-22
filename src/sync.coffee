@@ -1,5 +1,5 @@
 ###
-  backbone-mongo.js 0.5.4
+  backbone-mongo.js 0.5.5
   Copyright (c) 2013 Vidigami - https://github.com/vidigami/backbone-mongo
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
@@ -80,12 +80,11 @@ class MongoSync
         json._rev++ # increment revisions
 
         modifications = {$set: json}
-        if changes = model.changedAttributes() # look for unset things
-          keys_to_delete = []
-          keys_to_delete.push(key) for key, value of changes when _.isUndefined(value)
-          if keys_to_delete.length
+        if unsets = Utils.get(model, 'unsets')
+          Utils.unset(model, 'unsets') # clear now that we are dealing with them
+          if unsets.length
             modifications.$unset = {}
-            modifications.$unset[key] = '' for key in keys_to_delete
+            modifications.$unset[key] = '' for key in unsets when not model.attributes.hasOwnProperty(key) # unset if they haven't been re-set
 
         # update the record
         collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>

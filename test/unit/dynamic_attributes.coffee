@@ -17,6 +17,7 @@ module.exports = (options, callback) ->
 
     before (done) -> return done() unless options.before; options.before([MongoModel], done)
     after (done) -> callback(); done()
+
     describe 'unset', ->
       it 'should unset an attribute', (done) ->
         model = new MongoModel({name: 'Bob', type: 'thing'})
@@ -87,8 +88,8 @@ module.exports = (options, callback) ->
               assert.notDeepEqual(model.toJSON(), saved_model.toJSON(), "2 Not Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
             model.save (err) ->
               assert.ok(!err, "No errors: #{err}")
-              assert.ok(_.isUndefined(model.get('type')), "Attribute is still unset")
-              assert.ok(_.isUndefined(model.get('direction')), "Attribute is still unset")
+              assert.ok(_.isUndefined(model.get('type')), "Attribute 'type' is still unset")
+              assert.ok(_.isUndefined(model.get('direction')), "Attribute 'direction' is still unset")
 
               MongoModel.findOne model.id, (err, saved_model) ->
                 assert.ok(!err, "No errors: #{err}")
@@ -114,8 +115,8 @@ module.exports = (options, callback) ->
                   MongoModel.findOne model.id, (err, saved_model) ->
                     assert.ok(!err, "No errors: #{err}")
                     assert.ok(!!saved_model, "Found model: #{model.id}")
-                    assert.ok(!_.isUndefined(saved_model.get('type')), "Attribute was set")
-                    assert.ok(!_.isUndefined(saved_model.get('direction')), "Attribute was set")
+                    assert.ok(!_.isUndefined(saved_model.get('type')), "Attribute 'type' was set")
+                    assert.ok(!_.isUndefined(saved_model.get('direction')), "Attribute 'direction' was set")
 
                     assert.deepEqual(model.toJSON(), saved_model.toJSON(), "5 Expected: #{util.inspect(model.toJSON())}. Actual: #{util.inspect(saved_model.toJSON())}")
 
