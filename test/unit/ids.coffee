@@ -22,10 +22,15 @@ module.exports = (options, callback) ->
     sync: require('../../lib/sync')(ManualIdModel)
 
 
-  describe 'ID Functionality', ->
+  describe 'Id Functionality', ->
 
     before (done) -> return done() unless options.before; options.before([IndexedModel, ManualIdModel], done)
     after (done) -> callback(); done()
+    beforeEach (done) ->
+      queue = new Queue(1)
+      queue.defer (callback) -> IndexedModel.resetSchema(callback)
+      queue.defer (callback) -> ManualIdModel.resetSchema(callback)
+      queue.await done
 
     ######################################
     # Indexing
@@ -72,3 +77,36 @@ module.exports = (options, callback) ->
           model.save {id: null}, (err) ->
             assert.ok(err, 'should not save if missing an id')
             done()
+
+    ######################################
+    # Sort by Id
+    ######################################
+
+    describe 'sorting', ->
+      it 'should sort by _id', (done) ->
+        (new IndexedModel({name: 'Bob'})).save (err) ->
+          assert.ok(!err, "No errors: #{err}")
+
+          (new IndexedModel({name: 'Fred'})).save (err) ->
+            assert.ok(!err, "No errors: #{err}")
+            IndexedModel.cursor().sort('id').toModels (err, models) ->
+              assert.ok(!err, "No errors: #{err}")
+
+              ids = (model.id for model in models)
+              sorted_ids = _.clone(ids).sort()
+              assert.deepEqual(ids, sorted_ids, "Models were returned in sorted order")
+              done()
+
+      it 'should sort by id', (done) ->
+        (new ManualIdModel({id: 3, name: 'Bob'})).save (err) ->
+          assert.ok(!err, "No errors: #{err}")
+
+          (new ManualIdModel({id: 1, name: 'Bob'})).save (err) ->
+            assert.ok(!err, "No errors: #{err}")
+
+            ManualIdModel.cursor().sort('id').toModels (err, models) ->
+              assert.ok(!err, "No errors: #{err}")
+              ids = (model.id for model in models)
+              sorted_ids = _.clone(ids).sort()
+              assert.deepEqual(ids, sorted_ids, "Models were returned in sorted order")
+              done()
