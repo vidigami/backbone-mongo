@@ -60,7 +60,7 @@ module.exports = class MongoCursor extends MemoryCursor
 
         if @_cursor.$sort
           @_cursor.$sort = [@_cursor.$sort] unless _.isArray(@_cursor.$sort)
-          cursor = cursor.sort(_sortArgsToMongo(@_cursor.$sort))
+          cursor = cursor.sort(@backbone_adapter.attributesToNative(_sortArgsToMongo(@_cursor.$sort)))
 
         cursor = cursor.skip(@_cursor.$offset) if @_cursor.$offset
 
