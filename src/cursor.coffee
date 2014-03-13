@@ -51,6 +51,9 @@ module.exports = class MongoCursor extends MemoryCursor
         $fields = @_cursor.$white_list
       args.push($fields) if $fields
 
+      # pass through the $or query
+      find_query.$or = @_cursor.$or if @_cursor.$or
+
       # add callback and call
       args.push (err, cursor) =>
         return callback(err) if err
