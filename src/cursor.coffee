@@ -1,5 +1,5 @@
 ###
-  backbone-mongo.js 0.5.5
+  backbone-mongo.js 0.5.6
   Copyright (c) 2013 Vidigami - https://github.com/vidigami/backbone-mongo
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
@@ -10,6 +10,8 @@ Queue = require 'backbone-orm/lib/queue'
 
 MemoryCursor = require 'backbone-orm/lib/memory/cursor'
 
+ARRAY_QUERIES = ['$or', '$nor', '$and']
+
 _sortArgsToMongo = (args, backbone_adapter) ->
   args = if _.isArray(args) then args else [args]
   sorters = {}
@@ -18,6 +20,17 @@ _sortArgsToMongo = (args, backbone_adapter) ->
     (key = key.substring(1).trim(); value = -1) if key[0] is '-'
     sorters[if key is 'id' then backbone_adapter.id_attribute else key] = value
   return sorters
+
+_adaptIds = (query, backbone_adapter) ->
+  if _.isString(query)
+    try return backbone_adapter.findId(query) catch e then return query
+  else if _.isObject(query)
+    result = {}
+    result[key] = _adaptIds(value, backbone_adapter) for key, value of query
+    return result
+  else if _.isArray(query)
+    return (_adaptIds(value, backbone_adapter) for value in query)
+  return query
 
 module.exports = class MongoCursor extends MemoryCursor
   ##############################################
@@ -34,13 +47,10 @@ module.exports = class MongoCursor extends MemoryCursor
 
       if id = args[0].id
         delete args[0].id
-        if _.isObject(id)
-          id_target = args[0][@backbone_adapter.id_attribute] = {}
-          for key, value of id
-            id_target[key] = if _.isArray(value) then _.map(value, @backbone_adapter.findId) else @backbone_adapter.findId(value)
-        else
-          args[0][@backbone_adapter.id_attribute] = @backbone_adapter.findId(id)
-      args[0][@backbone_adapter.id_attribute] = {$in: _.map(@_cursor.$ids, @backbone_adapter.findId)} if @_cursor.$ids
+        args[0][@backbone_adapter.id_attribute] = _adaptIds(id, @backbone_adapter)
+      if @_cursor.$ids
+        args[0][@backbone_adapter.id_attribute] = {$in: _.map(@_cursor.$ids, @backbone_adapter.findId)}
+      args[0][key] = _adaptIds(@_cursor[key], @backbone_adapter) for key in ARRAY_QUERIES when @_cursor[key]
 
       # only select specific fields
       if @_cursor.$values
@@ -51,13 +61,9 @@ module.exports = class MongoCursor extends MemoryCursor
         $fields = @_cursor.$white_list
       args.push($fields) if $fields
 
-      # pass through the $or query
-      find_query.$or = @_cursor.$or if @_cursor.$or
-
       # add callback and call
       args.push (err, cursor) =>
         return callback(err) if err
-
         if @_cursor.$sort
           @_cursor.$sort = [@_cursor.$sort] unless _.isArray(@_cursor.$sort)
           cursor = cursor.sort(_sortArgsToMongo(@_cursor.$sort, @backbone_adapter))
