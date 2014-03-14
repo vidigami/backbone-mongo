@@ -21,15 +21,15 @@ _sortArgsToMongo = (args, backbone_adapter) ->
     sorters[if key is 'id' then backbone_adapter.id_attribute else key] = value
   return sorters
 
-_adaptIds = (query, backbone_adapter) ->
-  if _.isString(query)
-    try return backbone_adapter.findId(query) catch e then return query
-  else if _.isObject(query)
+_adaptIds = (query, backbone_adapter, is_id) ->
+  return query if _.isDate(query)
+  return (_adaptIds(value, backbone_adapter, is_id) for value in query) if _.isArray(query)
+  if _.isObject(query)
     result = {}
-    result[key] = _adaptIds(value, backbone_adapter) for key, value of query
+    for key, value of query
+      result[if key is 'id' then backbone_adapter.id_attribute else key] = _adaptIds(value, backbone_adapter, (is_id or key is 'id'))
     return result
-  else if _.isArray(query)
-    return (_adaptIds(value, backbone_adapter) for value in query)
+  return backbone_adapter.findId(query) if is_id
   return query
 
 module.exports = class MongoCursor extends MemoryCursor
@@ -43,13 +43,8 @@ module.exports = class MongoCursor extends MemoryCursor
     @buildFindQuery (err, find_query) =>
       return callback(err) if err
 
-      args = [find_query]
-
-      if id = args[0].id
-        delete args[0].id
-        args[0][@backbone_adapter.id_attribute] = _adaptIds(id, @backbone_adapter)
-      if @_cursor.$ids
-        args[0][@backbone_adapter.id_attribute] = {$in: _.map(@_cursor.$ids, @backbone_adapter.findId)}
+      args = [_adaptIds(find_query, @backbone_adapter)]
+      args[0][@backbone_adapter.id_attribute] = {$in: _adaptIds(@_cursor.$ids, @backbone_adapter, true)} if @_cursor.$ids
       args[0][key] = _adaptIds(@_cursor[key], @backbone_adapter) for key in ARRAY_QUERIES when @_cursor[key]
 
       # only select specific fields
