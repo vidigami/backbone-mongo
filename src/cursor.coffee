@@ -22,7 +22,7 @@ _sortArgsToMongo = (args, backbone_adapter) ->
   return sorters
 
 _adaptIds = (query, backbone_adapter, is_id) ->
-  return query if _.isDate(query)
+  return query if _.isDate(query) or _.isRegExp(query)
   return (_adaptIds(value, backbone_adapter, is_id) for value in query) if _.isArray(query)
   if _.isObject(query)
     result = {}
