@@ -24,7 +24,7 @@ module.exports = (options, callback) ->
 
   first_id = null
   second_ids = []
-  describe 'Id Functionality', ->
+  describe 'Join Table Functionality', ->
 
     before (done) -> return done() unless options.before; options.before([IndexedModel, ManualIdModel], done)
     after (done) -> callback(); done()
