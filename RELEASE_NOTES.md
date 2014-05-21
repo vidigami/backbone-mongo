@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.5.7
+* Bug fix for RegEx
+
 ### 0.5.6
 * Added support for Mongo's '$or', '$nor', '$and'. Currently, backbone-mongo-only
 
