@@ -1,6 +1,6 @@
 {
   "name": "backbone-mongo",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "MongoDB storage for BackboneORM",
   "main": "./lib/index.js",
   "license": "MIT",

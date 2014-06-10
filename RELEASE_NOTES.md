@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.5.8
+* Update dependencies
+
 ### 0.5.7
 * Bug fix for RegEx
 
