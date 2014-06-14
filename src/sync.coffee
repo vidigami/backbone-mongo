@@ -18,6 +18,7 @@ ModelTypeID = require('backbone-orm/lib/cache/singletons').ModelTypeID
 
 MongoCursor = require './cursor'
 Connection = require './connection'
+DatabaseTools = require './database_tools'
 
 DESTROY_BATCH_LIMIT = 1000
 
@@ -105,27 +106,7 @@ class MongoSync
   ###################################
   # Backbone ORM - Class Extensions
   ###################################
-  resetSchema: (options, callback) ->
-    queue = new Queue()
-
-    queue.defer (callback) => @collection (err, collection) ->
-      return callback(err) if err
-      collection.remove (err) ->
-        if options.verbose
-          if err
-            console.log "Failed to reset collection: #{collection.collectionName}. Error: #{err}"
-          else
-            console.log "Reset collection: #{collection.collectionName}"
-        callback(err)
-
-    queue.defer (callback) =>
-      schema = @model_type.schema()
-      for key, relation of schema.relations
-        if relation.type is 'hasMany' and relation.reverse_relation.type is 'hasMany'
-          do (relation) -> queue.defer (callback) -> relation.findOrGenerateJoinTable().resetSchema(callback)
-      callback()
-
-    queue.await callback
+  resetSchema: (options, callback) -> @db().resetSchema(options, callback)
 
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
@@ -152,6 +133,7 @@ class MongoSync
     @connection = new Connection(url, @schema, @sync_options.connection_options or {})
 
   collection: (callback) -> @connection.collection(callback)
+  db: => @db_tools or= new DatabaseTools(@)
 
   ###################################
   # Internal

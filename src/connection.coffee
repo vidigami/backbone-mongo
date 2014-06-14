@@ -53,12 +53,6 @@ module.exports = class Connection
     # try to reconnect
     (@connection_error = null; @_connect()) if @connection_error
 
-  ensureIndex: (field_name, table_name) =>
-    index_info = {}; index_info[field_name] = 1
-    @_collection.ensureIndex index_info, {background: true}, (err) =>
-      return new Error("MongoBackbone: Failed to indexed '#{field_name}' on #{table_name}. Reason: #{err}") if err
-      console.log("MongoBackbone: Successfully indexed '#{field_name}' on #{table_name}")
-
   _connect: ->
     queue = new Queue(1)
 
@@ -78,10 +72,6 @@ module.exports = class Connection
       @db.collection @collection_name, (err, collection) =>
         @_collection = collection unless err
         callback(err)
-
-        # ensure indexes asyncronously
-        @ensureIndex(key, @collection_name) for key, field of @schema.fields when field.indexed
-        @ensureIndex(relation.foreign_key, @collection_name) for key, relation of @schema.relations when relation.type is 'belongsTo' and not relation.isVirtual() and not relation.isEmbedded()
 
     # process awaiting requests
     queue.await (err) =>

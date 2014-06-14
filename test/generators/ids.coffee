@@ -7,20 +7,23 @@ Queue = require 'backbone-orm/lib/queue'
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 
 module.exports = (options, callback) ->
+  DATABASE_URL = options.database_url or ''
+  BASE_SCHEMA = options.schema or {}
+  SYNC = options.sync
+
   ModelCache.configure({enabled: !!options.cache, max: 100}) # configure caching
 
   class IndexedModel extends Backbone.Model
     schema:
       _id: [indexed: true]
-    url: "#{require('../config/database')['test']}/indexed_models"
-    sync: require('../../lib/sync')(IndexedModel)
+    url: "#{DATABASE_URL}/indexed_models"
+    sync: SYNC(IndexedModel)
 
   class ManualIdModel extends Backbone.Model
     schema:
       id: [indexed: true, manual_id: true]
-    url: "#{require('../config/database')['test']}/indexed_models"
-    sync: require('../../lib/sync')(ManualIdModel)
-
+    url: "#{DATABASE_URL}/indexed_models"
+    sync: SYNC(ManualIdModel)
 
   describe 'Id Functionality', ->
 

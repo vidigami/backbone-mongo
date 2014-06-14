@@ -7,11 +7,15 @@ Queue = require 'backbone-orm/lib/queue'
 ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
 
 module.exports = (options, callback) ->
+  DATABASE_URL = options.database_url or ''
+  BASE_SCHEMA = options.schema or {}
+  SYNC = options.sync
+
   ModelCache.configure({enabled: !!options.cache, max: 100}) # configure caching
 
   class MongoModel extends Backbone.Model
-    url: "#{require('../config/database')['test']}/mongo_model"
-    sync: require('../../lib/sync')(MongoModel)
+    url: "#{DATABASE_URL}/mongo_model"
+    sync: SYNC(MongoModel)
 
   describe 'Dynamic Attributes Functionality', ->
 
