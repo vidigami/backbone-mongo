@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.5.9
+* Added database indexing through database tools (Model.db().ensureSchema(callback) or Model.db().resetSchema(callback))
+
 ### 0.5.8
 * Update dependencies
 
