@@ -2,26 +2,41 @@ util = require 'util'
 assert = require 'assert'
 _ = require 'underscore'
 Backbone = require 'backbone'
-Queue = require 'backbone-orm/lib/queue'
 
-ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
+BackboneORM = require('backbone-orm')
+{Queue, Utils} = BackboneORM
+{ModelCache} = BackboneORM.CacheSingletons
 
-module.exports = (options, callback) ->
+option_sets = require('backbone-orm/test/option_sets')
+parameters = __test__parameters if __test__parameters?
+parameters or= {}; parameters.sync or= require '../..'
+_.each option_sets, exports = (options) ->
+  options = _.extend({}, options, parameters) if parameters
+
   DATABASE_URL = options.database_url or ''
   BASE_SCHEMA = options.schema or {}
   SYNC = options.sync
-
-  ModelCache.configure({enabled: !!options.cache, max: 100}) # configure caching
 
   class MongoModel extends Backbone.Model
     url: "#{DATABASE_URL}/mongo_model"
     sync: SYNC(MongoModel)
 
-  describe 'Dynamic Attributes Functionality', ->
+  describe "Dynamic Attributes Functionality #{options.$tags}", ->
 
     before (done) -> return done() unless options.before; options.before([MongoModel], done)
-    after (done) -> callback(); done()
+    after (done) ->
+      queue = new Queue()
+      queue.defer (callback) -> ModelCache.reset(callback)
+      queue.defer (callback) -> Utils.resetSchemas [MongoModel], callback
+      queue.await done
 
+    beforeEach (done) ->
+      queue = new Queue(1)
+      queue.defer (callback) -> ModelCache.configure({enabled: !!options.cache, max: 100}, callback)
+      queue.defer (callback) -> Utils.resetSchemas [MongoModel], callback
+      queue.await done
+
+    # TODO: these fail when the model cache is enabled
     describe 'unset', ->
       it 'should unset an attribute', (done) ->
         model = new MongoModel({name: 'Bob', type: 'thing'})

@@ -2,16 +2,19 @@ util = require 'util'
 assert = require 'assert'
 _ = require 'underscore'
 Backbone = require 'backbone'
-Queue = require 'backbone-orm/lib/queue'
+BackboneORM = require('backbone-orm')
+{Queue, Utils} = BackboneORM
+{ModelCache} = BackboneORM.CacheSingletons
 
-ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
+option_sets = require('backbone-orm/test/option_sets')
+parameters = __test__parameters if __test__parameters?
+parameters or= {}; parameters.sync or= require '../..'
+_.each option_sets, exports = (options) ->
+  options = _.extend({}, options, parameters) if parameters
 
-module.exports = (options, callback) ->
   DATABASE_URL = options.database_url or ''
   BASE_SCHEMA = options.schema or {}
   SYNC = options.sync
-
-  ModelCache.configure({enabled: !!options.cache, max: 100}) # configure caching
 
   class IndexedModel extends Backbone.Model
     schema:
@@ -25,12 +28,19 @@ module.exports = (options, callback) ->
     url: "#{DATABASE_URL}/indexed_models"
     sync: SYNC(ManualIdModel)
 
-  describe 'Id Functionality', ->
+  describe "Id Functionality #{options.$tags}", ->
 
-    before (done) -> return done() unless options.before; options.before([IndexedModel, ManualIdModel], done)
-    after (done) -> callback(); done()
+    before (done) -> return done() unless options.before; options.before([MongoModel], done)
+    after (done) ->
+      queue = new Queue()
+      queue.defer (callback) -> ModelCache.reset(callback)
+      queue.defer (callback) -> Utils.resetSchemas [IndexedModel, ManualIdModel], callback
+      queue.await done
+
     beforeEach (done) ->
       queue = new Queue(1)
+      queue.defer (callback) -> ModelCache.configure({enabled: !!options.cache, max: 100}, callback)
+      queue.defer (callback) -> Utils.resetSchemas [IndexedModel, ManualIdModel], callback
       queue.defer (callback) -> IndexedModel.resetSchema(callback)
       queue.defer (callback) -> ManualIdModel.resetSchema(callback)
       queue.await done
@@ -45,8 +55,6 @@ module.exports = (options, callback) ->
         # indexing is async so need to poll
         checkIndexes = ->
           IndexedModel::sync 'collection', (err, collection) ->
-            console.log "collection"
-
             assert.ok(!err, "No errors: #{err}")
 
             collection.indexExists '_id_', (err, exists) ->
