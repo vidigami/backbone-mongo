@@ -112,7 +112,6 @@ class MongoSync
   destroy: (query, callback) ->
     [query, callback] = [{}, query] if arguments.length is 1
 
-    QueryCache.reset @model_type, (err) =>
     @connection.collection (err, collection) =>
       return callback(err) if err
       @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query),
