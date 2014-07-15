@@ -111,6 +111,8 @@ class MongoSync
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
   destroy: (query, callback) ->
+    [query, callback] = [{}, query] if arguments.length is 1
+
     QueryCache.reset @model_type, (err) =>
       return callback(err) if err
       @connection.collection (err, collection) =>
