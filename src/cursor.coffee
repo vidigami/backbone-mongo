@@ -6,9 +6,10 @@
 
 util = require 'util'
 _ = require 'underscore'
-Queue = require 'backbone-orm/lib/queue'
+BackboneORM = require 'backbone-orm'
+{Queue} = BackboneORM
 
-MemoryCursor = require 'backbone-orm/lib/memory/cursor'
+MemoryCursor = (require 'backbone-orm').sync.Cursor
 
 ARRAY_QUERIES = ['$or', '$nor', '$and']
 

@@ -5,7 +5,7 @@
 ###
 
 ObjectID =  require('mongodb').ObjectID
-JSONUtils = require 'backbone-orm/lib/json_utils'
+{JSONUtils} = require 'backbone-orm'
 
 module.exports = class DocumentAdapter_MongoId
 

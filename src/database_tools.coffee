@@ -5,7 +5,7 @@
 ###
 
 _ = require 'underscore'
-Queue = require 'backbone-orm/lib/queue'
+{Queue} = require 'backbone-orm'
 
 module.exports = class DatabaseTools
 

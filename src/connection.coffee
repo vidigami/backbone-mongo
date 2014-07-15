@@ -5,10 +5,9 @@
 ###
 
 _ = require 'underscore'
-Queue = require 'backbone-orm/lib/queue'
 
-DatabaseUrl = require 'backbone-orm/lib/database_url'
-ConnectionPool = require 'backbone-orm/lib/connection_pool'
+BackboneORM = require 'backbone-orm'
+{Queue, DatabaseURL, ConnectionPool} = BackboneORM
 CONNECTION_QUERIES = require './connection_queries'
 
 MongoClient = require('mongodb').MongoClient
@@ -22,7 +21,7 @@ module.exports = class Connection
 
     @collection_requests = []
     @db = null
-    database_url = new DatabaseUrl(@url, true)
+    database_url = new DatabaseURL(@url, true)
     @collection_name = database_url.table
 
     # configure query options and regenerate URL

@@ -4,7 +4,7 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-JSONUtils = require 'backbone-orm/lib/json_utils'
+{JSONUtils} = require 'backbone-orm'
 
 module.exports = class DocumentAdapter_NoMongoId
 

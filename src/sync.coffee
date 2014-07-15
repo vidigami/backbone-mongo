@@ -8,13 +8,18 @@ util = require 'util'
 _ = require 'underscore'
 Backbone = require 'backbone'
 moment = require 'moment'
+crypto = require 'crypto'
 
-Queue = require 'backbone-orm/lib/queue'
-Schema = require 'backbone-orm/lib/schema'
-Utils = require 'backbone-orm/lib/utils'
-QueryCache = require('backbone-orm/lib/cache/singletons').QueryCache
-ModelCache = require('backbone-orm/lib/cache/singletons').ModelCache
-ModelTypeID = require('backbone-orm/lib/cache/singletons').ModelTypeID
+BackboneORM = require 'backbone-orm'
+{Queue, Schema, Utils} = BackboneORM
+{ModelCache} = BackboneORM.CacheSingletons
+
+generateModelID = (model_type) ->
+  try url = _.result(new model_type, 'url') catch e
+  name_url = "#{url or ''}_#{model_type.model_name}"
+  return crypto.createHash('md5').update(name_url).digest('hex')
+
+BackboneORM.CacheSingletons.ModelTypeID or=
 
 MongoCursor = require './cursor'
 Connection = require './connection'
@@ -26,7 +31,7 @@ class MongoSync
 
   constructor: (@model_type, @sync_options) ->
     @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
-    @model_type.model_id = ModelTypeID.generate(@model_type)
+    @model_type.model_id = generateModelID(@model_type)
     @schema = new Schema(@model_type)
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
@@ -56,52 +61,46 @@ class MongoSync
 
   create: (model, options) ->
     return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
-    QueryCache.reset @model_type, (err) =>
+    @connection.collection (err, collection) =>
       return options.error(err) if err
-      @connection.collection (err, collection) =>
-        return options.error(err) if err
-        return options.error(new Error 'New document has a non-empty revision') if model.get('_rev')
-        doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
-        collection.insert doc, (err, docs) =>
-          return options.error(new Error "Failed to create model. Error: #{err or 'document not found'}") if err or not docs or docs.length isnt 1
-          options.success(@backbone_adapter.nativeToAttributes(docs[0]))
+      return options.error(new Error 'New document has a non-empty revision') if model.get('_rev')
+      doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
+      collection.insert doc, (err, docs) =>
+        return options.error(new Error "Failed to create model. Error: #{err or 'document not found'}") if err or not docs or docs.length isnt 1
+        options.success(@backbone_adapter.nativeToAttributes(docs[0]))
 
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
     return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
-    QueryCache.reset @model_type, (err) =>
+    @connection.collection (err, collection) =>
       return options.error(err) if err
-      @connection.collection (err, collection) =>
-        return options.error(err) if err
 
-        json = @backbone_adapter.attributesToNative(model.toJSON())
-        delete json._id if @backbone_adapter.id_attribute is '_id'
-        find_query = @backbone_adapter.modelFindQuery(model)
-        find_query._rev = json._rev
-        json._rev++ # increment revisions
+      json = @backbone_adapter.attributesToNative(model.toJSON())
+      delete json._id if @backbone_adapter.id_attribute is '_id'
+      find_query = @backbone_adapter.modelFindQuery(model)
+      find_query._rev = json._rev
+      json._rev++ # increment revisions
 
-        modifications = {$set: json}
-        if unsets = Utils.get(model, 'unsets')
-          Utils.unset(model, 'unsets') # clear now that we are dealing with them
-          if unsets.length
-            modifications.$unset = {}
-            modifications.$unset[key] = '' for key in unsets when not model.attributes.hasOwnProperty(key) # unset if they haven't been re-set
+      modifications = {$set: json}
+      if unsets = Utils.get(model, 'unsets')
+        Utils.unset(model, 'unsets') # clear now that we are dealing with them
+        if unsets.length
+          modifications.$unset = {}
+          modifications.$unset[key] = '' for key in unsets when not model.attributes.hasOwnProperty(key) # unset if they haven't been re-set
 
-        # update the record
-        collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
-          return options.error(new Error "Failed to update model (#{@model_type.model_name}). Error: #{err}") if err
-          return options.error(new Error "Failed to update model (#{@model_type.model_name}). Either the document has been deleted or the revision (_rev) was stale.") unless doc
-          return options.error(new Error "Failed to update revision (#{@model_type.model_name}). Is: #{doc._rev} expecting: #{json._rev}") if doc._rev isnt json._rev
-          options.success(@backbone_adapter.nativeToAttributes(doc))
+      # update the record
+      collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, doc) =>
+        return options.error(new Error "Failed to update model (#{@model_type.model_name}). Error: #{err}") if err
+        return options.error(new Error "Failed to update model (#{@model_type.model_name}). Either the document has been deleted or the revision (_rev) was stale.") unless doc
+        return options.error(new Error "Failed to update revision (#{@model_type.model_name}). Is: #{doc._rev} expecting: #{json._rev}") if doc._rev isnt json._rev
+        options.success(@backbone_adapter.nativeToAttributes(doc))
 
   delete: (model, options) ->
-    QueryCache.reset @model_type, (err) =>
+    @connection.collection (err, collection) =>
       return options.error(err) if err
-      @connection.collection (err, collection) =>
+      collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
         return options.error(err) if err
-        collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
-          return options.error(err) if err
-          options.success()
+        options.success()
 
   ###################################
   # Backbone ORM - Class Extensions
@@ -114,17 +113,16 @@ class MongoSync
     [query, callback] = [{}, query] if arguments.length is 1
 
     QueryCache.reset @model_type, (err) =>
+    @connection.collection (err, collection) =>
       return callback(err) if err
-      @connection.collection (err, collection) =>
-        return callback(err) if err
-        @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query),
-          ((model_json, callback) =>
-            Utils.patchRemoveByJSON @model_type, model_json, (err) =>
+      @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query),
+        ((model_json, callback) =>
+          Utils.patchRemoveByJSON @model_type, model_json, (err) =>
+            return callback(err) if err
+            collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
               return callback(err) if err
-              collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
-                return callback(err) if err
-                callback()
-          ), callback
+              callback()
+        ), callback
 
   ###################################
   # Backbone Mongo - Extensions
@@ -164,5 +162,6 @@ module.exports = (type, sync_options={}) ->
     return false if method is 'isRemote'
     return if sync[method] then sync[method].apply(sync, Array::slice.call(arguments, 1)) else undefined
 
-  require('backbone-orm/lib/extensions/model')(type) # mixin extensions
+
+  Utils.configureModelType(type) # mixin extensions
   return ModelCache.configureSync(type, sync_fn)
