@@ -12,10 +12,9 @@
   "scripts": {
     "test": "npm run build && npm --no-spin run test-self; npm --no-spin run test-rest-all",
     "test-self": "ulimit -n 1024; NODE_ENV=test mocha 'test/{issues,spec}/**/*.coffee' 'node_modules/backbone-orm/test/spec/**/*.coffee' --grep ''",
-    "test-rest": "npm run pre-test-rest && mocha --require backbone-rest/test/parameters_express3 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
-    "test-rest-all": "npm run pre-test-rest-all && echo node_modules/backbone-rest/test/parameters_*.coffee | xargs -n1 -J % mocha --require % 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
-    "pre-test-rest": "cd node_modules/backbone-rest && npm run vendor-install",
-    "pre-test-rest-all": "cd node_modules/backbone-rest && (npm ls >/dev/null || npm install) && npm run vendor-install",
+    "test-rest": "npm run backbone-rest vendor-install && mocha --require backbone-rest/test/parameters_express3 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
+    "test-rest-all": "npm run pre-test-rest && echo node_modules/backbone-rest/test/parameters_*.coffee | xargs -n1 -J % mocha --require % 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
+    "pre-test-rest-all": "npm run backbone-rest vendor-install && cd node_modules/backbone-rest && npm ls >/dev/null || npm install",
     "build": "coffee -o lib -c src",
     "watch": "coffee -o lib -w src",
     "clean": "rm -rf lib/*",
