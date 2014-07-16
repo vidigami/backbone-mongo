@@ -7,7 +7,6 @@
 util = require 'util'
 _ = require 'underscore'
 Backbone = require 'backbone'
-moment = require 'moment'
 crypto = require 'crypto'
 
 BackboneORM = require 'backbone-orm'
