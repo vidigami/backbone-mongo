@@ -57,13 +57,13 @@ module.exports = class Connection
 
     # use pooled connection or create new
     queue.defer (callback) =>
-      return callback() if @db = ConnectionPool.get(@url)
+      return callback() if (@db = ConnectionPool.get(@url))
 
       MongoClient.connect @url, _.clone(@connection_options), (err, db) =>
         return callback(err) if err
 
         # it may have already been connected to asynchronously, release new
-        if @db = ConnectionPool.get(@url) then db.close() else ConnectionPool.set(@url, @db = db)
+        if (@db = ConnectionPool.get(@url)) then db.close() else ConnectionPool.set(@url, @db = db)
         callback()
 
     # get the collection
@@ -75,7 +75,7 @@ module.exports = class Connection
     # process awaiting requests
     queue.await (err) =>
       collection_requests = @collection_requests.splice(0, @collection_requests.length)
-      if @connection_error = err
+      if (@connection_error = err)
         console.log "Backbone-Mongo: unable to create connection. Error: #{err}"
         request(new Error("Connection failed. Error: #{err}")) for request in collection_requests
       else

@@ -1,4 +1,5 @@
 ![logo](https://github.com/vidigami/backbone-mongo/raw/master/media/logo.png)
+[![Build Status](https://travis-ci.org/vidigami/backbone-mongo.svg?branch=develop)](https://travis-ci.org/vidigami/backbone-mongo)
 
 BackboneMongo provides MongoDB storage for BackboneORM.
 

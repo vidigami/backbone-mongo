@@ -11,8 +11,8 @@
   "engines": {"node": "*"},
   "scripts": {
     "test": "npm run build && npm --no-spin run test-all",
-    "test-all": "ulimit -n 1024; NODE_ENV=test mocha --require backbone-rest/test/parameters_express4 'test/{issues,spec}/**/*.coffee' 'node_modules/backbone-{orm,rest}/test/spec/**/*.tests.coffee' --grep ''",
-    "test-self": "ulimit -n 1024; NODE_ENV=test mocha 'test/{issues,spec}/**/*.coffee' 'node_modules/backbone-orm/test/spec/**/*.coffee' --grep ''",
+    "test-all": "ulimit -n 1024; NODE_ENV=test mocha --require backbone-rest/test/parameters_express4 '{node_modules/backbone-{orm,rest}/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
+    "test-self": "ulimit -n 1024; NODE_ENV=test mocha '{node_modules/backbone-orm/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
     "test-rest": "mocha --require backbone-rest/test/parameters_express4 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
     "build": "coffee -o lib -c src",
     "watch": "coffee -o lib -w src",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "coffee-script": "*",
+    "body-parser": "1.x",
     "mocha": "*",
     "chai": "*",
     "backbone-rest": "git+https://github.com/vidigami/backbone-rest#develop",
