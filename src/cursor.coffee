@@ -6,8 +6,6 @@
 
 util = require 'util'
 _ = require 'underscore'
-BackboneORM = require 'backbone-orm'
-{Queue} = BackboneORM
 
 MemoryCursor = (require 'backbone-orm').sync.Cursor
 
