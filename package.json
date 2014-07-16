@@ -14,7 +14,7 @@
     "test-self": "ulimit -n 1024; NODE_ENV=test mocha 'test/{issues,spec}/**/*.coffee' 'node_modules/backbone-orm/test/spec/**/*.coffee' --grep ''",
     "test-rest": "npm run backbone-rest vendor-install && mocha --require backbone-rest/test/parameters_express3 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
     "test-rest-all": "npm run pre-test-rest && echo node_modules/backbone-rest/test/parameters_*.coffee | xargs -n1 -J % mocha --require % 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
-    "pre-test-rest-all": "npm run backbone-rest vendor-install && cd node_modules/backbone-rest && npm ls >/dev/null || npm install",
+    "pre-test-rest": "npm run backbone-rest vendor-install && cd node_modules/backbone-rest && npm ls >/dev/null || npm install",
     "build": "coffee -o lib -c src",
     "watch": "coffee -o lib -w src",
     "clean": "rm -rf lib/*",
@@ -26,7 +26,7 @@
   "devDependencies": {
     "coffee-script": "*",
     "mocha": "*",
-    "powerset": "0.0.x",
+    "chai": "*",
     "backbone-rest": "git+https://github.com/vidigami/backbone-rest#develop",
     "supertest": "*",
     "express": "3.x"
@@ -35,7 +35,6 @@
     "underscore": "1.x",
     "backbone": "1.x",
     "backbone-orm": "git+https://github.com/vidigami/backbone-orm#develop",
-    "moment": "2.x",
     "inflection": "1.x",
     "mongodb": "1.x"
   }
