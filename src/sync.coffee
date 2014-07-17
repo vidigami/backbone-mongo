@@ -7,18 +7,11 @@
 util = require 'util'
 _ = require 'underscore'
 Backbone = require 'backbone'
-crypto = require 'crypto'
+ObjectID =  require('mongodb').ObjectID
 
 BackboneORM = require 'backbone-orm'
 {Queue, Schema, Utils} = BackboneORM
 {ModelCache} = BackboneORM.CacheSingletons
-
-generateModelID = (model_type) ->
-  try url = _.result(new model_type, 'url') catch e
-  name_url = "#{url or ''}_#{model_type.model_name}"
-  return crypto.createHash('md5').update(name_url).digest('hex')
-
-BackboneORM.CacheSingletons.ModelTypeID or=
 
 MongoCursor = require './cursor'
 Connection = require './connection'
@@ -30,8 +23,7 @@ class MongoSync
 
   constructor: (@model_type, @sync_options) ->
     @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
-    @model_type.model_id = generateModelID(@model_type)
-    @schema = new Schema(@model_type)
+    @schema = new Schema(@model_type, {id: {type: ObjectID}})
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
   initialize: (model) ->
