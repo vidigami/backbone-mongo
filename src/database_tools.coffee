@@ -4,8 +4,7 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-_ = require 'underscore'
-{Queue} = require 'backbone-orm'
+{_, Queue} = require 'backbone-orm'
 
 module.exports = class DatabaseTools
 

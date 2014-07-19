@@ -4,10 +4,7 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-util = require 'util'
-_ = require 'underscore'
-
-MemoryCursor = (require 'backbone-orm').sync.Cursor
+{_, sync} = require 'backbone-orm'
 
 ARRAY_QUERIES = ['$or', '$nor', '$and']
 
@@ -31,7 +28,7 @@ _adaptIds = (query, backbone_adapter, is_id) ->
   return backbone_adapter.findId(query) if is_id
   return query
 
-module.exports = class MongoCursor extends MemoryCursor
+module.exports = class MongoCursor extends sync.Cursor
   ##############################################
   # Execution of the Query
   ##############################################

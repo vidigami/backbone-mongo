@@ -4,7 +4,7 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-ObjectID =  require('mongodb').ObjectID
+{ObjectID} =  require 'mongodb'
 {JSONUtils} = require 'backbone-orm'
 
 module.exports = class DocumentAdapter_MongoId

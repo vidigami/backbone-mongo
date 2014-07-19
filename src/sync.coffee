@@ -4,20 +4,15 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-util = require 'util'
-_ = require 'underscore'
-Backbone = require 'backbone'
-ObjectID =  require('mongodb').ObjectID
-
-BackboneORM = require 'backbone-orm'
-{Queue, Schema, Utils} = BackboneORM
+{ObjectID} =  require 'mongodb'
+{_, Backbone, Queue, Schema, Utils, JSONUtils} = BackboneORM = require 'backbone-orm'
 
 MongoCursor = require './cursor'
-Connection = require './connection'
+Connection = require './lib/connection'
 DatabaseTools = require './database_tools'
 
 DESTROY_BATCH_LIMIT = 1000
-CAPABILITIES = {self_reference: true, embed: true}
+CAPABILITIES = {embed: true, json: true, self_reference: true}
 
 class MongoSync
 
@@ -56,7 +51,7 @@ class MongoSync
 
   # @nodoc
   create: (model, options) ->
-    return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
+    return options.error(new Error "Missing manual id for create: #{JSONUtils.stringify(model.attributes)}") if @manual_id and not model.id
     @connection.collection (err, collection) =>
       return options.error(err) if err
       return options.error(new Error 'New document has a non-empty revision') if model.get('_rev')
@@ -68,7 +63,7 @@ class MongoSync
   # @nodoc
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
-    return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
+    return options.error(new Error "Missing manual id for create: #{JSONUtils.stringify(model.attributes)}") if @manual_id and not model.id
     @connection.collection (err, collection) =>
       return options.error(err) if err
 
@@ -103,9 +98,6 @@ class MongoSync
   ###################################
   # Backbone ORM - Class Extensions
   ###################################
-
-  # @no_doc
-  capabilities: -> CAPABILITIES
 
   # @no_doc
   resetSchema: (options, callback) -> @db().resetSchema(options, callback)
@@ -148,8 +140,8 @@ class MongoSync
       for info in field_info
         if info.manual_id
           @manual_id = true
-          return require './document_adapter_no_mongo_id'
-    return require './document_adapter_mongo_id' # default is using the mongodb's ids
+          return require './lib/document_adapter_no_mongo_id'
+    return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
 
 
 module.exports = (type, sync_options={}) ->
@@ -170,4 +162,4 @@ module.exports = (type, sync_options={}) ->
   Utils.configureModelType(type) # mixin extensions
   return BackboneORM.model_cache.configureSync(type, sync_fn)
 
-module.exports.capabilities = CAPABILITIES
+module.exports.capabilities = (url) -> CAPABILITIES

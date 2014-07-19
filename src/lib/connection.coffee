@@ -4,13 +4,10 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-_ = require 'underscore'
+{MongoClient} = require('mongodb')
+{_, Queue, DatabaseURL, ConnectionPool} = require 'backbone-orm'
 
-BackboneORM = require 'backbone-orm'
-{Queue, DatabaseURL, ConnectionPool} = BackboneORM
 CONNECTION_QUERIES = require './connection_queries'
-
-MongoClient = require('mongodb').MongoClient
 
 module.exports = class Connection
   @options = {}
