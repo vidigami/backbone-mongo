@@ -11,7 +11,7 @@
   "engines": {"node": "*"},
   "scripts": {
     "test": "npm run build && ulimit -n 1024; NODE_ENV=test mocha --require backbone-rest/test/parameters_express4 '{node_modules/backbone-{orm,rest}/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
-    "test-quick": "npm run build && ulimit -n 1024; NODE_ENV=test mocha --require backbone-rest/test/parameters_express4 '{node_modules/backbone-{orm,rest}/,}test/{issues,spec}/**/*.tests.coffee' --grep '@no_cache'",
+    "test-quick": "npm run build && ulimit -n 1024; NODE_ENV=test mocha --require backbone-rest/test/parameters_express4 'node_modules/backbone-orm/test/spec/**/*.tests.coffee' --grep '@no_cache @no_embed'",
     "test-self": "npm run build && ulimit -n 1024; NODE_ENV=test mocha '{node_modules/backbone-orm/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
     "test-rest": "npm run build && mocha --require backbone-rest/test/parameters_express4 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
     "build": "coffee -o lib -c src",

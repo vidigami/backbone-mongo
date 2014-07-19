@@ -17,14 +17,17 @@ Connection = require './connection'
 DatabaseTools = require './database_tools'
 
 DESTROY_BATCH_LIMIT = 1000
+CAPABILITIES = {self_reference: true, embed: true}
 
 class MongoSync
 
   constructor: (@model_type, @sync_options) ->
     @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
     @schema = new Schema(@model_type, {id: {type: ObjectID}})
+
     @backbone_adapter = @model_type.backbone_adapter = @_selectAdapter()
 
+  # @nodoc
   initialize: (model) ->
     return if @is_initialized; @is_initialized = true
 
@@ -35,6 +38,8 @@ class MongoSync
   ###################################
   # Classic Backbone Sync
   ###################################
+
+  # @nodoc
   read: (model, options) ->
     # a collection
     if model.models
@@ -49,6 +54,7 @@ class MongoSync
         return options.error(new Error "Model not found. Id #{model.id}") unless json
         options.success(json)
 
+  # @nodoc
   create: (model, options) ->
     return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
     @connection.collection (err, collection) =>
@@ -59,6 +65,7 @@ class MongoSync
         return options.error(new Error "Failed to create model. Error: #{err or 'document not found'}") if err or not docs or docs.length isnt 1
         options.success(@backbone_adapter.nativeToAttributes(docs[0]))
 
+  # @nodoc
   update: (model, options) ->
     return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
     return options.error(new Error "Missing manual id for create: #{util.inspect(model.attributes)}") if @manual_id and not model.id
@@ -85,6 +92,7 @@ class MongoSync
         return options.error(new Error "Failed to update revision (#{@model_type.model_name}). Is: #{doc._rev} expecting: #{json._rev}") if doc._rev isnt json._rev
         options.success(@backbone_adapter.nativeToAttributes(doc))
 
+  # @nodoc
   delete: (model, options) ->
     @connection.collection (err, collection) =>
       return options.error(err) if err
@@ -95,10 +103,17 @@ class MongoSync
   ###################################
   # Backbone ORM - Class Extensions
   ###################################
+
+  # @no_doc
+  capabilities: -> CAPABILITIES
+
+  # @no_doc
   resetSchema: (options, callback) -> @db().resetSchema(options, callback)
 
+  # @no_doc
   cursor: (query={}) -> return new MongoCursor(query, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
 
+  # @no_doc
   destroy: (query, callback) ->
     [query, callback] = [{}, query] if arguments.length is 1
 
@@ -154,3 +169,5 @@ module.exports = (type, sync_options={}) ->
 
   Utils.configureModelType(type) # mixin extensions
   return BackboneORM.model_cache.configureSync(type, sync_fn)
+
+module.exports.capabilities = CAPABILITIES
