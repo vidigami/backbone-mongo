@@ -14,24 +14,17 @@ _.each option_sets, exports = (options) ->
   BASE_SCHEMA = options.schema or {}
   SYNC = options.sync
 
-  class MongoModel extends Backbone.Model
-    url: "#{DATABASE_URL}/mongo_model"
-    sync: SYNC(MongoModel)
-
   describe "Dynamic Attributes Functionality #{options.$tags}", ->
+    MongoModel = null
+    before ->
+      BackboneORM.configure {model_cache: {enabled: !!options.cache, max: 100}}
 
-    before (done) -> return done() unless options.before; options.before([MongoModel], done)
-    after (done) ->
-      queue = new Queue()
-      queue.defer (callback) -> BackboneORM.model_cache.reset(callback)
-      queue.defer (callback) -> Utils.resetSchemas [MongoModel], callback
-      queue.await done
+      class MongoModel extends Backbone.Model
+        url: "#{DATABASE_URL}/mongo_model"
+        sync: SYNC(MongoModel)
 
-    beforeEach (done) ->
-      queue = new Queue(1)
-      queue.defer (callback) -> BackboneORM.configure({model_cache: {enabled: !!options.cache, max: 100}}, callback)
-      queue.defer (callback) -> Utils.resetSchemas [MongoModel], callback
-      queue.await done
+    after (callback) -> Utils.resetSchemas [MongoModel], callback
+    beforeEach (callback) -> Utils.resetSchemas [MongoModel], callback
 
     # TODO: these fail when the model cache is enabled
     describe 'unset', ->

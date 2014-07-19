@@ -14,34 +14,25 @@ _.each option_sets, exports = (options) ->
   BASE_SCHEMA = options.schema or {}
   SYNC = options.sync
 
-  class IndexedModel extends Backbone.Model
-    schema:
-      _id: [indexed: true]
-    url: "#{DATABASE_URL}/indexed_models"
-    sync: SYNC(IndexedModel)
-
-  class ManualIdModel extends Backbone.Model
-    schema:
-      id: [indexed: true, manual_id: true]
-    url: "#{DATABASE_URL}/indexed_models"
-    sync: SYNC(ManualIdModel)
-
   describe "Id Functionality #{options.$tags}", ->
+    IndexedModel = ManualIdModel = null
+    before ->
+      BackboneORM.configure {model_cache: {enabled: !!options.cache, max: 100}}
 
-    before (done) -> return done() unless options.before; options.before([MongoModel], done)
-    after (done) ->
-      queue = new Queue()
-      queue.defer (callback) -> BackboneORM.model_cache.reset(callback)
-      queue.defer (callback) -> Utils.resetSchemas [IndexedModel, ManualIdModel], callback
-      queue.await done
+      class IndexedModel extends Backbone.Model
+        schema:
+          _id: [indexed: true]
+        url: "#{DATABASE_URL}/indexed_models"
+        sync: SYNC(IndexedModel)
 
-    beforeEach (done) ->
-      queue = new Queue(1)
-      queue.defer (callback) -> BackboneORM.configure({model_cache: {enabled: !!options.cache, max: 100}}, callback)
-      queue.defer (callback) -> Utils.resetSchemas [IndexedModel, ManualIdModel], callback
-      queue.defer (callback) -> IndexedModel.resetSchema(callback)
-      queue.defer (callback) -> ManualIdModel.resetSchema(callback)
-      queue.await done
+      class ManualIdModel extends Backbone.Model
+        schema:
+          id: [indexed: true, manual_id: true]
+        url: "#{DATABASE_URL}/manual_id_models"
+        sync: SYNC(ManualIdModel)
+
+    after (callback) -> Utils.resetSchemas [IndexedModel, ManualIdModel], callback
+    beforeEach (callback) -> Utils.resetSchemas [IndexedModel, ManualIdModel], callback
 
     ######################################
     # Indexing
