@@ -1,9 +1,8 @@
 util = require 'util'
 assert = require 'assert'
-Backbone = require 'backbone'
-BackboneORM = require('backbone-orm')
-{Queue, Utils} = BackboneORM
-{ModelCache} = BackboneORM.CacheSingletons
+
+BackboneORM = require 'backbone-orm'
+{_, Backbone, Queue, Utils} = BackboneORM
 
 SYNC = (if __test__parameters? then __test__parameters else require '../..').sync
 describe 'Fetching embedded model', ->
@@ -11,7 +10,7 @@ describe 'Fetching embedded model', ->
   before ->
     class InnerModel extends Backbone.Model
       urlRoot: '/inner_models'
-      sync: require('backbone-orm').sync(InnerModel)
+      sync: BackboneORM.sync(InnerModel)
 
     class OuterModel extends Backbone.Model
       urlRoot: 'mongodb://localhost:27017/outer_models',
@@ -21,13 +20,13 @@ describe 'Fetching embedded model', ->
 
   after (callback) ->
     queue = new Queue()
-    queue.defer (callback) -> ModelCache.reset(callback)
+    queue.defer (callback) -> BackboneORM.model_cache.reset(callback)
     queue.defer (callback) -> Utils.resetSchemas [InnerModel, OuterModel], callback
     queue.await callback
 
   beforeEach (callback) ->
     queue = new Queue(1)
-    queue.defer (callback) -> ModelCache.configure({enabled: false, max: 100}, callback)
+    queue.defer (callback) -> BackboneORM.configure({model_cache: {enabled: false, max: 100}}, callback)
     queue.defer (callback) -> Utils.resetSchemas [InnerModel, OuterModel], callback
     queue.await callback
 

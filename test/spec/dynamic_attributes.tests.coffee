@@ -1,11 +1,8 @@
 util = require 'util'
 assert = require 'assert'
-_ = require 'underscore'
-Backbone = require 'backbone'
 
-BackboneORM = require('backbone-orm')
-{Queue, Utils} = BackboneORM
-{ModelCache} = BackboneORM.CacheSingletons
+BackboneORM = require 'backbone-orm'
+{_, Backbone, Queue, Utils} = BackboneORM
 
 option_sets = require('backbone-orm/test/option_sets')
 parameters = __test__parameters if __test__parameters?
@@ -26,13 +23,13 @@ _.each option_sets, exports = (options) ->
     before (done) -> return done() unless options.before; options.before([MongoModel], done)
     after (done) ->
       queue = new Queue()
-      queue.defer (callback) -> ModelCache.reset(callback)
+      queue.defer (callback) -> BackboneORM.model_cache.reset(callback)
       queue.defer (callback) -> Utils.resetSchemas [MongoModel], callback
       queue.await done
 
     beforeEach (done) ->
       queue = new Queue(1)
-      queue.defer (callback) -> ModelCache.configure({enabled: !!options.cache, max: 100}, callback)
+      queue.defer (callback) -> BackboneORM.configure({model_cache: {enabled: !!options.cache, max: 100}}, callback)
       queue.defer (callback) -> Utils.resetSchemas [MongoModel], callback
       queue.await done
 

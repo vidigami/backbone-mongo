@@ -1,8 +1,8 @@
 util = require 'util'
 assert = require 'assert'
-_ = require 'underscore'
-Backbone = require 'backbone'
-Queue = require 'backbone-orm/lib/queue'
+
+BackboneORM = require 'backbone-orm'
+{_, Backbone, Queue} = BackboneORM
 
 module.exports = (options, callback) ->
   DATABASE_URL = options.database_url or ''

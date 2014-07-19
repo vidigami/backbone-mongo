@@ -11,7 +11,6 @@ ObjectID =  require('mongodb').ObjectID
 
 BackboneORM = require 'backbone-orm'
 {Queue, Schema, Utils} = BackboneORM
-{ModelCache} = BackboneORM.CacheSingletons
 
 MongoCursor = require './cursor'
 Connection = require './connection'
@@ -154,4 +153,4 @@ module.exports = (type, sync_options={}) ->
 
 
   Utils.configureModelType(type) # mixin extensions
-  return ModelCache.configureSync(type, sync_fn)
+  return BackboneORM.model_cache.configureSync(type, sync_fn)
