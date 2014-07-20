@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/vidigami/backbone-mongo.svg?branch=develop)](https://travis-ci.org/vidigami/backbone-mongo)
+[![Build Status](https://travis-ci.org/vidigami/backbone-mongo.svg?branch=develop)](https://travis-ci.org/vidigami/backbone-mongo#master)
 
 ![logo](https://github.com/vidigami/backbone-mongo/raw/master/media/logo.png)
 

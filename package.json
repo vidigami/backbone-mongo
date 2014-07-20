@@ -1,6 +1,6 @@
 {
   "name": "backbone-mongo",
-  "version": "0.5.9",
+  "version": "0.6.0",
   "description": "MongoDB storage for BackboneORM",
   "main": "./lib/index.js",
   "license": "MIT",
@@ -27,14 +27,14 @@
     "body-parser": "1.x",
     "mocha": "*",
     "chai": "*",
-    "backbone-rest": "git+https://github.com/vidigami/backbone-rest#develop",
+    "backbone-rest": "git+https://github.com/vidigami/backbone-rest",
     "supertest": "*",
     "express": "3.x"
   },
   "dependencies": {
     "underscore": "1.6.x",
     "backbone": "1.1.x",
-    "backbone-orm": "git+https://github.com/vidigami/backbone-orm#develop",
+    "backbone-orm": "git+https://github.com/vidigami/backbone-orm",
     "mongodb": "1.4.x"
   }
 }

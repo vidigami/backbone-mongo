@@ -1,5 +1,10 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.6.0
+* Upgraded to BackboneORM 0.6.x
+* See [upgrade notes](https://github.com/vidigami/backbone-mongo/blob/master/UPGRADING.md) for upgrading pointers from 0.5.x
+* BREAKING: moved connection_options to a configure function
+
 ### 0.5.9
 * Added database indexing through database tools (Model.db().ensureSchema(callback) or Model.db().resetSchema(callback))
 
