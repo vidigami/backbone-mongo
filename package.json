@@ -27,14 +27,14 @@
     "body-parser": "1.x",
     "mocha": "*",
     "chai": "*",
-    "backbone-rest": "git+https://github.com/vidigami/backbone-rest",
+    "backbone-rest": "0.6.x",
     "supertest": "*",
     "express": "3.x"
   },
   "dependencies": {
     "underscore": "1.6.x",
     "backbone": "1.1.x",
-    "backbone-orm": "git+https://github.com/vidigami/backbone-orm",
+    "backbone-orm": "0.6.x",
     "mongodb": "1.4.x"
   }
 }
