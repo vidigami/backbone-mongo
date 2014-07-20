@@ -4,17 +4,16 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-{MongoClient} = require('mongodb')
+{MongoClient} = require 'mongodb'
 {_, Queue, DatabaseURL, ConnectionPool} = require 'backbone-orm'
+BackboneMongo = require '../core'
 
 CONNECTION_QUERIES = require './connection_queries'
 
 module.exports = class Connection
-  @options = {}
-
   constructor: (@url, @schema={}, options={}) ->
     throw new Error 'Expecting a string url' unless _.isString(@url)
-    @connection_options = _.extend(_.clone(Connection.options), options)
+    @connection_options = _.extend({}, BackboneMongo.connection_options, options)
 
     @collection_requests = []
     @db = null
@@ -56,7 +55,7 @@ module.exports = class Connection
     queue.defer (callback) =>
       return callback() if (@db = ConnectionPool.get(@url))
 
-      MongoClient.connect @url, _.clone(@connection_options), (err, db) =>
+      MongoClient.connect @url, @connection_options, (err, db) =>
         return callback(err) if err
 
         # it may have already been connected to asynchronously, release new

@@ -16,7 +16,7 @@ CAPABILITIES = {embed: true, json: true, self_reference: true}
 
 class MongoSync
 
-  constructor: (@model_type, @sync_options) ->
+  constructor: (@model_type, @sync_options={}) ->
     @model_type.model_name = Utils.findOrGenerateModelName(@model_type)
     @schema = new Schema(@model_type, {id: {type: ObjectID}})
 
@@ -126,7 +126,7 @@ class MongoSync
   connect: (url) ->
     return if @connection and @connection.url is url
     @connection.destroy() if @connection
-    @connection = new Connection(url, @schema, @sync_options.connection_options or {})
+    @connection = new Connection(url, @schema, @sync_options)
 
   collection: (callback) -> @connection.collection(callback)
   db: => @db_tools or= new DatabaseTools(@)

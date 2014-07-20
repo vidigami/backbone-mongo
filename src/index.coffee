@@ -4,6 +4,17 @@
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
 
-module.exports =
+{_, Backbone} = BackboneORM = require 'backbone-orm'
+
+module.exports = BackboneMongo = require './core' # avoid circular dependencies
+publish =
+  configure: require './lib/configure'
   sync: require './sync'
-  connection_options: require('./lib/connection').options
+
+  _: _
+  Backbone: Backbone
+publish._.extend(BackboneMongo, publish)
+
+# re-expose modules
+BackboneMongo.modules = {'backbone-orm': BackboneORM}
+BackboneMongo.modules[key] = value for key, value of BackboneORM.modules
