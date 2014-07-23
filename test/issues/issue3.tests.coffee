@@ -1,6 +1,5 @@
 util = require 'util'
 assert = require 'assert'
-
 BackboneORM = require 'backbone-orm'
 {_, Backbone, Queue, Utils} = BackboneORM
 
@@ -11,7 +10,7 @@ _.each BackboneORM.TestUtils.optionSets(), exports = (options) ->
   BASE_SCHEMA = options.schema or {}
   SYNC = options.sync
 
-  describe 'Fetching embedded model', ->
+  describe "Fetching embedded model #{options.$parameter_tags or ''}#{options.$tags}", ->
     InnerModel = OuterModel = null
     before ->
       BackboneORM.configure {model_cache: {enabled: !!options.cache, max: 100}}

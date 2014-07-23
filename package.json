@@ -1,35 +1,51 @@
 {
   "name": "backbone-mongo",
-  "version": "0.6.0",
+  "version": "0.5.9",
   "description": "MongoDB storage for BackboneORM",
   "main": "./lib/index.js",
   "license": "MIT",
   "author": "Kevin Malakoff (https://github.com/kmalakoff)",
-  "contributors": ["Gwilym Humphreys (https://github.com/gwilymhumphreys)"],
-  "repository": {"type": "git", "url": "https://github.com/vidigami/backbone-mongo.git"},
-  "keywords": ["backbone", "orm", "backbone-orm", "mongo", "mongodb"],
-  "engines": {"node": "*"},
+  "contributors": [
+    "Gwilym Humphreys (https://github.com/gwilymhumphreys)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vidigami/backbone-mongo.git"
+  },
+  "keywords": [
+    "backbone",
+    "orm",
+    "backbone-orm",
+    "mongo",
+    "mongodb"
+  ],
+  "engines": {
+    "node": "*"
+  },
   "scripts": {
-    "test": "npm run build && ulimit -n 1024; NODE_ENV=test mocha --require backbone-rest/test/parameters_express4 '{node_modules/backbone-{orm,rest}/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
-    "test-quick": "npm run build && ulimit -n 1024; NODE_ENV=test mocha --require backbone-rest/test/parameters_express4 'node_modules/backbone-orm/test/spec/**/*.tests.coffee' --grep '@no_cache @no_embed'",
-    "test-self": "npm run build && ulimit -n 1024; NODE_ENV=test mocha '{node_modules/backbone-orm/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
-    "test-rest": "npm run build && mocha --require backbone-rest/test/parameters_express4 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
+    "test": "ulimit -n 1024; gulp test",
+    "test-mocha-all": "ulimit -n 1024; mocha --require backbone-rest/test/parameters_express4 '{node_modules/backbone-{orm,rest}/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
+    "test-mocha-self": "ulimit -n 1024; mocha '{node_modules/backbone-orm/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
+    "test-mocha-rest": "ulimit -n 1024; mocha --require backbone-rest/test/parameters_express4 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
     "build": "coffee -o lib -c src",
     "watch": "coffee -o lib -w src",
     "clean": "rm -rf lib/*",
     "prepublish": "npm run build",
-
     "build_dep": "npm run-script backbone-orm build; npm run-script backbone-rest build",
     "watch_dep": "npm run-script backbone-orm watch; npm run-script backbone-rest watch"
   },
   "devDependencies": {
-    "coffee-script": "*",
-    "body-parser": "1.x",
-    "mocha": "*",
-    "chai": "*",
     "backbone-rest": "git+https://github.com/vidigami/backbone-rest",
-    "supertest": "*",
-    "express": "3.x"
+    "body-parser": "1.x",
+    "chai": "*",
+    "coffee-script": "*",
+    "express": "3.x",
+    "gulp": "^3.8.6",
+    "gulp-coffee": "^2.1.1",
+    "gulp-mocha": "^0.5.1",
+    "gulp-util": "^3.0.0",
+    "mocha": "*",
+    "supertest": "*"
   },
   "dependencies": {
     "underscore": "1.6.x",
