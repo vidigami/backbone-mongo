@@ -15,7 +15,7 @@ gulp.task 'watch', ['build'], (callback) ->
   return gulp.watch './src/**/*.coffee', -> buildLibraries()
 
 testFn = (options={}) -> (callback) ->
-  gutil.log 'Running Node.js tests'
+  gutil.log "Running Node.js tests #{if options.quick then '(quick)' else ''}"
   global.__test__parameters = require './test/parameters' # ensure that globals for the target backend are loaded
   global.__test__app_framework = {factory: (require 'backbone-rest/test/parameters_express4'), name: 'express4'}
   mocha_options = if options.quick then {grep: '@no_options'} else {}
