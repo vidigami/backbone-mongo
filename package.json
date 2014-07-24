@@ -37,6 +37,7 @@
     "gulp-mocha": "^0.5.1",
     "gulp-util": "^3.0.0",
     "mocha": "*",
+    "event-stream": "*",
     "supertest": "*"
   },
   "dependencies": {
