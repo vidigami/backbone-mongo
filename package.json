@@ -24,9 +24,6 @@
   },
   "scripts": {
     "test": "ulimit -n 1024; gulp test",
-    "test-mocha-all": "ulimit -n 1024; mocha --require backbone-rest/test/parameters_express4 '{node_modules/backbone-{orm,rest}/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
-    "test-mocha-self": "ulimit -n 1024; mocha '{node_modules/backbone-orm/,}test/{issues,spec}/**/*.tests.coffee' --grep ''",
-    "test-mocha-rest": "ulimit -n 1024; mocha --require backbone-rest/test/parameters_express4 'node_modules/backbone-rest/test/spec/**/*.tests.coffee' --grep ''",
     "build": "coffee -o lib -c src",
     "watch": "coffee -o lib -w src",
     "clean": "rm -rf lib/*",
