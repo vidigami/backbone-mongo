@@ -4,11 +4,8 @@ assert = require 'assert'
 BackboneORM = require 'backbone-orm'
 {_, Backbone, Queue, Utils} = BackboneORM
 
-option_sets = require('backbone-orm/test/option_sets')
-parameters = __test__parameters if __test__parameters?
-parameters or= {}; parameters.sync or= require '../..'
-_.each option_sets, exports = (options) ->
-  options = _.extend({}, options, parameters) if parameters
+_.each BackboneORM.TestUtils.optionSets(), exports = (options) ->
+  options = _.extend({}, options, __test__parameters) if __test__parameters?
 
   DATABASE_URL = options.database_url or ''
   BASE_SCHEMA = options.schema or {}
