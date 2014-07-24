@@ -65,10 +65,16 @@ Please [checkout the website](http://vidigami.github.io/backbone-orm/backbone-mo
 To build the library for Node.js:
 
 ```
-$ npm run build
+$ gulp build
 ```
 
-Please run tests before submitting a pull request.
+Please run tests before submitting a pull request:
+
+```
+$ gulp test-quick
+```
+
+and eventually all tests:
 
 ```
 $ npm test
