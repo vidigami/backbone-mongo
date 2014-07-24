@@ -24,8 +24,6 @@
   },
   "scripts": {
     "test": "ulimit -n 1024; gulp test",
-    "build": "coffee -o lib -c src",
-    "watch": "coffee -o lib -w src",
     "prepublish": "npm run build"
   },
   "devDependencies": {
