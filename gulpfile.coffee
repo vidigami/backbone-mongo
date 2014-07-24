@@ -1,3 +1,4 @@
+_ = require 'underscore'
 es = require 'event-stream'
 
 gulp = require 'gulp'
@@ -18,12 +19,13 @@ testFn = (options={}) -> (callback) ->
   global.__test__parameters = require './test/parameters' # ensure that globals for the target backend are loaded
   global.__test__app_framework = {factory: (require 'backbone-rest/test/parameters_express4'), name: 'express4'}
   mocha_options = if options.quick then {grep: '@no_options'} else {}
-  return gulp.src(['{node_modules/backbone-{orm,rest}/,}test/{issues,spec}/**/*.tests.coffee'])
-    .pipe(mocha(mocha_options))
+  gulp.src("{node_modules/backbone-#{if options.quick then 'orm' else '{orm,rest}'}/,}test/{issues,spec/sync}/**/*.tests.coffee")
+    .pipe(mocha(_.extend({reporter: 'dot'}, mocha_options)))
     .pipe es.writeArray (err) ->
       delete global.__test__parameters # cleanup globals
       callback(err)
       process.exit(0|(!!err))
+  return # promises workaround: https://github.com/gulpjs/gulp/issues/455
 
 gulp.task 'test', ['build'], testFn()
 gulp.task 'test-quick', ['build'], testFn({quick: true})
