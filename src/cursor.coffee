@@ -52,6 +52,8 @@ module.exports = class MongoCursor extends sync.Cursor
         $fields = @_cursor.$white_list
       args.push($fields) if $fields
 
+      return @aggregate(args[0], $fields, callback) if @_cursor.$unique
+
       # add callback and call
       args.push (err, cursor) =>
         return callback(err) if err
@@ -89,3 +91,48 @@ module.exports = class MongoCursor extends sync.Cursor
       @connection.collection (err, collection) =>
         return callback(err) if err
         collection.find.apply(collection, args)
+
+  aggregate: (match, $fields, callback) =>
+    @connection.collection (err, collection) =>
+      return callback(err) if err
+      pipeline = []
+      pipeline.push({$match: match})
+
+      if @_cursor.$sort
+        @_cursor.$sort = [@_cursor.$sort] unless _.isArray(@_cursor.$sort)
+        sort = {$sort: _sortArgsToMongo(@_cursor.$sort, @backbone_adapter)}
+        pipeline.push(sort)
+
+      group_id_args = {}
+      (group_id_args[field] = "$#{field}") for field in @_cursor.$unique
+      group_args = {_id: group_id_args}
+
+      # Selecting by fields
+      # Remove any id fields, they may conflict with the $group _id
+      $fields = ($fields or []).concat(@_cursor.$unique)
+      $fields = _.without($fields, '_id')
+      group_args[field] = {$first: "$#{field}"} for field in $fields
+      group_args.__id = {$first: "$#{@backbone_adapter.id_attribute}"}
+
+      pipeline.push({$group: group_args})
+      pipeline.push(sort) if sort # Results must be re-sorted after grouping
+
+      if @_cursor.$one or @hasCursorQuery('$exists')
+        pipeline.push({$limit: 1})
+      else if @_cursor.$limit
+        pipeline.push({$limit: @_cursor.$limit})
+
+      pipeline.push({$skip: @_cursor.$offset}) if @_cursor.$offset
+
+      pipeline.push({$group: {_id: null, count: {$sum: 1}}}) if @_cursor.$count
+
+      collection.aggregate pipeline, {}, (err, results) =>
+        return callback(err) if err
+        if @_cursor.$count
+          return callback(null, results[0].count)
+        # Clean up id mapping
+        for result in results
+          result.id = result.__id.toString()
+          delete result._id
+          delete result.__id
+        callback(null, @selectResults(results))
