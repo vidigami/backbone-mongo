@@ -20,7 +20,11 @@ gulp.task 'test', ['build'], (callback) ->
 
   global.__test__parameters = require './test/parameters' # ensure that globals for the target backend are loaded
   global.__test__app_framework = {factory: (require 'backbone-rest/test/parameters_express4'), name: 'express4'}
-  gulp.src("{node_modules/backbone-#{if tags.indexOf('@quick') >= 0 then 'orm' else '{orm,rest}'}/,}test/{issues,spec/sync}/**/*.tests.coffee")
+  files = [
+    "{node_modules/backbone-#{if tags.indexOf('@quick') >= 0 then 'orm' else '{orm,rest}'}/,}test/{issues,spec/sync}/**/*.tests.coffee"
+    "test/**/*.tests.coffee"
+  ]
+  gulp.src(files)
     .pipe(mocha({reporter: 'dot', grep: tags}))
     .pipe es.writeArray (err) ->
       delete global.__test__parameters # cleanup globals

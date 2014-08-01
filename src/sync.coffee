@@ -12,7 +12,7 @@ Connection = require './lib/connection'
 DatabaseTools = require './database_tools'
 
 DESTROY_BATCH_LIMIT = 1000
-CAPABILITIES = {embed: true, json: true, self_reference: true, unique: true}
+CAPABILITIES = {embed: true, json: true, unique: true, manual_ids: true, self_reference: true}
 
 class MongoSync
 
@@ -50,8 +50,9 @@ class MongoSync
         options.success(json)
 
   # @nodoc
-  create: (model, options) ->
-    return options.error(new Error "Missing manual id for create: #{JSONUtils.stringify(model.attributes)}") if @manual_id and not model.id
+  create: (model, options, force) ->
+    return options.error(new Error("Create should not be called for manual option. Set an id before calling save. Model: #{JSONUtils.stringify(model.toJSON())}")) if @manual_id and not force
+
     @connection.collection (err, collection) =>
       return options.error(err) if err
       return options.error(new Error 'New document has a non-empty revision') if model.get('_rev')
@@ -62,8 +63,8 @@ class MongoSync
 
   # @nodoc
   update: (model, options) ->
-    return @create(model, options) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
-    return options.error(new Error "Missing manual id for create: #{JSONUtils.stringify(model.attributes)}") if @manual_id and not model.id
+    return @create(model, options, true) unless model.get('_rev') # no revision, create - in the case we manually set an id and are saving for the first time
+
     @connection.collection (err, collection) =>
       return options.error(err) if err
 
@@ -138,7 +139,7 @@ class MongoSync
     for field_name, field_info of @schema.raw
       continue if (field_name isnt 'id') or not _.isArray(field_info)
       for info in field_info
-        if info.manual_id
+        if info.manual or info.manual_id # TODO: remove legacy support for manual_id
           @manual_id = true
           return require './lib/document_adapter_no_mongo_id'
     return require './lib/document_adapter_mongo_id' # default is using the mongodb's ids
@@ -157,7 +158,6 @@ module.exports = (type, sync_options={}) ->
     return sync.schema if method is 'schema'
     return false if method is 'isRemote'
     return if sync[method] then sync[method].apply(sync, Array::slice.call(arguments, 1)) else undefined
-
 
   Utils.configureModelType(type) # mixin extensions
   return BackboneORM.model_cache.configureSync(type, sync_fn)
