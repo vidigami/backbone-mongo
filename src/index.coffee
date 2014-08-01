@@ -13,7 +13,7 @@ publish =
 
   _: _
   Backbone: Backbone
-publish._.extend(BackboneMongo, publish)
+_.extend(BackboneMongo, publish)
 
 # re-expose modules
 BackboneMongo.modules = {'backbone-orm': BackboneORM}
