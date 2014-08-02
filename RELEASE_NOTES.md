@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.6.2
+* Added dynamic and manual_ids capabilities
+
 ### 0.6.1
 * Added unique capability
 
