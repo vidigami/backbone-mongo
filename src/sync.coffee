@@ -12,7 +12,7 @@ Connection = require './lib/connection'
 DatabaseTools = require './database_tools'
 
 DESTROY_BATCH_LIMIT = 1000
-CAPABILITIES = {embed: true, json: true, unique: true, manual_ids: true, self_reference: true}
+CAPABILITIES = {embed: true, json: true, unique: true, manual_ids: true, dynamic: true, self_reference: true}
 
 class MongoSync
 
