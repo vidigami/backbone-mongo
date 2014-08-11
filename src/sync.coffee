@@ -89,12 +89,15 @@ class MongoSync
         options.success(@backbone_adapter.nativeToAttributes(doc))
 
   # @nodoc
-  delete: (model, options) ->
+  delete: (model, options) -> @deleteCB(model, (err) => if err then options.error(err) else options.success())
+
+  # @nodoc
+  deleteCB: (model, callback) =>
     @connection.collection (err, collection) =>
       return options.error(err) if err
       collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
-        return options.error(err) if err
-        options.success()
+        return callback(err) if err
+        Utils.patchRemove(@model_type, model, callback)
 
   ###################################
   # Backbone ORM - Class Extensions
@@ -112,14 +115,7 @@ class MongoSync
 
     @connection.collection (err, collection) =>
       return callback(err) if err
-      @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query),
-        ((model_json, callback) =>
-          Utils.patchRemoveByJSON @model_type, model_json, (err) =>
-            return callback(err) if err
-            collection.remove @backbone_adapter.attributesToNative({id: model_json.id}), (err) =>
-              return callback(err) if err
-              callback()
-        ), callback
+      @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query), @deleteCB, callback
 
   ###################################
   # Backbone Mongo - Extensions
