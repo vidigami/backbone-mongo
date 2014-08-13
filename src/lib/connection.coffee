@@ -1,5 +1,5 @@
 ###
-  backbone-mongo.js 0.6.3
+  backbone-mongo.js 0.6.4
   Copyright (c) 2013 Vidigami - https://github.com/vidigami/backbone-mongo
   License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ###
@@ -72,7 +72,7 @@ module.exports = class Connection
     queue.await (err) =>
       collection_requests = @collection_requests.splice(0, @collection_requests.length)
       if (@connection_error = err)
-        console.log "Backbone-Mongo: unable to create connection. Error: #{err}"
-        request(new Error("Connection failed. Error: #{err}")) for request in collection_requests
+        console.log "BackboneMongo: unable to create connection. Error:", err
+        request(new Error("Connection failed. Error: #{err.message or err}")) for request in collection_requests
       else
         request(null, @_collection) for request in collection_requests

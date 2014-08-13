@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.6.4
+* Better errors for failed connections
+
 ### 0.6.3
 * Bug fix for join tables
 
