@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.6.5
+* Upgrade to BackboneORM 0.7.x
+
 ### 0.6.4
 * Better errors for failed connections
 
