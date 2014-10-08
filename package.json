@@ -1,6 +1,6 @@
 {
   "name": "backbone-mongo",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "MongoDB storage for BackboneORM",
   "main": "./lib/index.js",
   "license": "MIT",
@@ -31,17 +31,17 @@
     "body-parser": "1.x",
     "chai": "*",
     "coffee-script": "*",
-    "express": "3.x",
+    "express": "4.x",
     "gulp": "*",
     "gulp-coffee": "*",
     "gulp-mocha": "*",
     "gulp-util": "*",
     "mocha": "*",
     "event-stream": "*",
-    "supertest": "*"
+    "supertest": "0.13.x"
   },
   "dependencies": {
-    "underscore": "1.6.x",
+    "underscore": "1.7.x",
     "backbone": "1.1.x",
     "backbone-orm": "0.7.x",
     "mongodb": "1.4.x"
