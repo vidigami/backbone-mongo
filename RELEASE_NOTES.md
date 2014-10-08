@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.6.6
+* $unique does not work properly with $page: https://github.com/vidigami/backbone-mongo/issues/14
+
 ### 0.6.5
 * Upgrade to BackboneORM 0.7.x
 
