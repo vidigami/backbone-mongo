@@ -115,24 +115,41 @@ module.exports = class MongoCursor extends sync.Cursor
       group_args.__id = {$first: "$#{@backbone_adapter.id_attribute}"}
 
       pipeline.push({$group: group_args})
+      count_pipeline = [].concat(pipeline) if @hasCursorQuery('$page')
+
       pipeline.push(sort) if sort # Results must be re-sorted after grouping
+
+      pipeline.push({$skip: @_cursor.$offset}) if @_cursor.$offset
 
       if @_cursor.$one or @hasCursorQuery('$exists')
         pipeline.push({$limit: 1})
       else if @_cursor.$limit
         pipeline.push({$limit: @_cursor.$limit})
 
-      pipeline.push({$skip: @_cursor.$offset}) if @_cursor.$offset
-
-      pipeline.push({$group: {_id: null, count: {$sum: 1}}}) if @_cursor.$count
+      return @_aggregateCount(collection, pipeline, callback) if @_cursor.$count
 
       collection.aggregate pipeline, {}, (err, results) =>
         return callback(err) if err
-        if @_cursor.$count
-          return callback(null, results[0].count)
         # Clean up id mapping
         for result in results
           result.id = result.__id.toString()
           delete result._id
           delete result.__id
-        callback(null, @selectResults(results))
+
+        @fetchIncludes results, (err) =>
+          return callback(err) if err
+          if @hasCursorQuery('$page')
+            @_aggregateCount collection, count_pipeline, (err, count) =>
+              return callback(err) if err
+              callback(null, {
+                offset: @_cursor.$offset or 0
+                total_rows: count
+                rows: @selectResults(results)
+              })
+          else
+            callback(null, @selectResults(results))
+
+  _aggregateCount: (collection, pipeline, callback) ->
+    collection.aggregate pipeline.concat([{$group: {_id: null, count: {$sum: 1}}}]), {}, (err, results) ->
+      return callback(err) if err
+      callback(null, results[0].count)
