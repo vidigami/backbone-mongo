@@ -152,4 +152,4 @@ module.exports = class MongoCursor extends sync.Cursor
   _aggregateCount: (collection, pipeline, callback) ->
     collection.aggregate pipeline.concat([{$group: {_id: null, count: {$sum: 1}}}]), {}, (err, results) ->
       return callback(err) if err
-      callback(null, results[0].count)
+      callback(null, results[0]?.count or 0)
