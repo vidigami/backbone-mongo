@@ -24,7 +24,7 @@
   },
   "scripts": {
     "test": "ulimit -n 1024; gulp test",
-    "prepublish": "npm run build"
+    "prepublish": "gulp build"
   },
   "devDependencies": {
     "backbone-rest": "0.7.x",
