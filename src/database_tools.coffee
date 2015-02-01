@@ -70,7 +70,7 @@ module.exports = class DatabaseTools
 
     @sync.collection (err, collection) =>
       return callback(err) if err
-      collection.remove (err) =>
+      collection.remove {}, (err) =>
         if err
           console.log "Failed to reset collection: #{collection.collectionName}. Error: #{err}" if options.verbose
         else
