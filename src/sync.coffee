@@ -57,9 +57,13 @@ class MongoSync
       return options.error(err) if err
       return options.error(new Error 'New document has a non-empty revision') if model.get('_rev')
       doc = @backbone_adapter.attributesToNative(model.toJSON()); doc._rev = 1 # start revisions
-      collection.insert doc, (err, docs) =>
-        return options.error(new Error "Failed to create model. Error: #{err or 'document not found'}") if err or not docs or docs.length isnt 1
+      collection.insert doc, (err, results) =>
+        return options.error(err) if err
+
+        docs = results.ops or results # 1.x and 2.x
+        return callback(new Error "Failed to create model. Error: document not found") if not docs or docs.length isnt 1
         options.success(@backbone_adapter.nativeToAttributes(docs[0]))
+
 
   # @nodoc
   update: (model, options) ->
@@ -95,9 +99,7 @@ class MongoSync
   deleteCB: (model, callback) =>
     @connection.collection (err, collection) =>
       return options.error(err) if err
-      collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) =>
-        return callback(err) if err
-        Utils.patchRemove(@model_type, model, callback)
+      collection.remove @backbone_adapter.attributesToNative({id: model.id}), (err) => if err then callback(err) else Utils.patchRemove(@model_type, model, callback)
 
   ###################################
   # Backbone ORM - Class Extensions
@@ -114,8 +116,7 @@ class MongoSync
     [query, callback] = [{}, query] if arguments.length is 1
 
     @connection.collection (err, collection) =>
-      return callback(err) if err
-      @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query), @deleteCB, callback
+      if err then callback(err) else @model_type.each _.extend({$each: {limit: DESTROY_BATCH_LIMIT, json: true}}, query), @deleteCB, callback
 
   ###################################
   # Backbone Mongo - Extensions
