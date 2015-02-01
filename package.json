@@ -44,6 +44,6 @@
     "underscore": "1.x",
     "backbone": "1.x",
     "backbone-orm": "0.7.x",
-    "mongodb": "1.x"
+    "mongodb": "2.x"
   }
 }
