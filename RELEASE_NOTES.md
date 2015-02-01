@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.6.8
+* Bug fixes for mongo-native 2.x
+
 ### 0.6.7
 * Fix issue with empty results from aggregation ($unique) and $count
 
