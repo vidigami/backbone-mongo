@@ -63,10 +63,7 @@ module.exports = class Connection
         callback()
 
     # get the collection
-    queue.defer (callback) =>
-      @db.collection @collection_name, (err, collection) =>
-        @_collection = collection unless err
-        callback(err)
+    queue.defer (callback) => @db.collection @collection_name, (err, collection) => if err then callback(err) else callback(null, @_collection = collection)
 
     # process awaiting requests
     queue.await (err) =>
