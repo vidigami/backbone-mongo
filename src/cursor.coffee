@@ -78,7 +78,8 @@ module.exports = class MongoCursor extends sync.Cursor
           @fetchIncludes json, (err) =>
             return callback(err) if err
             if @hasCursorQuery('$page')
-              cursor.count (err, count) =>
+              count_cursor = new MongoCursor(@_find, _.pick(@, ['model_type', 'connection', 'backbone_adapter']))
+              count_cursor.count (err, count) =>
                 return callback(err) if err
                 callback(null, {
                   offset: @_cursor.$offset or 0
