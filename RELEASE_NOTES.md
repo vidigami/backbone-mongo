@@ -1,5 +1,8 @@
 Please refer to the following release notes when upgrading your version of BackboneORM.
 
+### 0.6.10
+* Better mongodb version checking
+
 ### 0.6.9
 * Bug fix for 2.x result
 
