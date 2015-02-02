@@ -7,6 +7,9 @@
 {ObjectID} =  require 'mongodb'
 {_, Backbone, Queue, Schema, Utils, JSONUtils} = BackboneORM = require 'backbone-orm'
 
+MONGO_GENERATION = +(require 'mongodb/package.json').version.split('.').shift()
+throw new Error("mongodb driver version #{(require 'mongodb/package.json').version} not yet supported. Open an issue: https://github.com/vidigami/backbone-mongo/issues") unless MONGO_GENERATION in [1, 2]
+
 MongoCursor = require './cursor'
 Connection = require './lib/connection'
 DatabaseTools = require './database_tools'
@@ -60,10 +63,9 @@ class MongoSync
       collection.insert doc, (err, results) =>
         return options.error(err) if err
 
-        docs = results.ops or results # 1.x and 2.x
+        docs = if MONGO_GENERATION is 1 then results else results.ops # 1.x and 2.x
         return callback(new Error "Failed to create model. Error: document not found") if not docs or docs.length isnt 1
         options.success(@backbone_adapter.nativeToAttributes(docs[0]))
-
 
   # @nodoc
   update: (model, options) ->
@@ -89,7 +91,7 @@ class MongoSync
       collection.findAndModify find_query, [[@backbone_adapter.id_attribute, 'asc']], modifications, {new: true}, (err, result) =>
         return options.error(new Error "Failed to update model (#{@model_type.model_name}). Error: #{err}") if err
 
-        doc = if result and result.hasOwnProperty('value') then result.value else result # 1.x and 2.x
+        doc = if MONGO_GENERATION is 1 then result else result.value # 1.x and 2.x
         return options.error(new Error "Failed to update model (#{@model_type.model_name}). Either the document has been deleted or the revision (_rev) was stale.") unless doc
         return options.error(new Error "Failed to update revision (#{@model_type.model_name}). Is: #{doc._rev} expecting: #{json._rev}") if doc._rev isnt json._rev
         options.success(@backbone_adapter.nativeToAttributes(doc))
